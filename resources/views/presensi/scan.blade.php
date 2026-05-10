@@ -188,7 +188,7 @@
     <!-- Area Kamera (Awalnya Disembunyikan) -->
     <div id="camera-area" class="w-100 d-none" style="max-width: 640px;">
         <div class="video-wrapper mb-4" id="video-wrapper">
-            <video id="video" autoplay muted playsinline></video>
+            <video id="video" autoplay muted playsinline disablePictureInPicture></video>
             <div class="scan-line" id="scan-line"></div>
         </div>
 

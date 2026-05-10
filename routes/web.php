@@ -7,6 +7,7 @@ use App\Http\Controllers\SantriController;
 use App\Http\Controllers\PresensiController;
 use App\Http\Controllers\SantriDashboardController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\IzinController;
 
 // Auth routes (Login is now the root page)
 Route::get('/', [AuthController::class, 'showLoginForm'])->name('login');
@@ -15,6 +16,13 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // Protected routes
 Route::middleware(['auth'])->group(function () {
+    // Izin/Permits
+    Route::get('/izin', [IzinController::class, 'index'])->name('izin.index');
+    Route::get('/izin/create', [IzinController::class, 'create'])->name('izin.create');
+    Route::post('/izin', [IzinController::class, 'store'])->name('izin.store');
+    Route::get('/izin/manage', [IzinController::class, 'manage'])->name('izin.manage');
+    Route::post('/izin/{izin}/status', [IzinController::class, 'updateStatus'])->name('izin.update-status');
+
     // Profile Management
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile.index');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');

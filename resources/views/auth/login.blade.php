@@ -89,6 +89,20 @@
                     <p class="text-muted">Masuk untuk mengelola kehadiran santri.</p>
                 </div>
 
+                @if (session('error'))
+                    <div class="alert alert-danger border-0 shadow-sm mb-4 small d-flex align-items-center" style="border-radius: 0.75rem;">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        <div>{{ session('error') }}</div>
+                    </div>
+                @endif
+
+                @if (session('success'))
+                    <div class="alert alert-success border-0 shadow-sm mb-4 small d-flex align-items-center" style="border-radius: 0.75rem;">
+                        <i class="bi bi-check-circle-fill me-2"></i>
+                        <div>{{ session('success') }}</div>
+                    </div>
+                @endif
+
                 @if ($errors->any())
                     <div class="alert alert-danger border-0 shadow-sm mb-4 small d-flex align-items-center" style="border-radius: 0.75rem;">
                         <i class="bi bi-exclamation-triangle-fill me-2"></i>
@@ -108,7 +122,7 @@
                             <span class="input-group-text bg-light border-0 ps-3 pe-2 text-muted" style="border-radius: 0.75rem 0 0 0.75rem;">
                                 <i class="bi bi-envelope"></i>
                             </span>
-                            <input type="email" class="form-control border-0 bg-light py-2" style="border-radius: 0 0.75rem 0.75rem 0;" name="email" placeholder="nama@thursina.id" value="{{ old('email') }}" required autofocus>
+                            <input type="email" class="form-control border-0 bg-light py-2" style="border-radius: 0 0.75rem 0.75rem 0;" name="email" placeholder="Masukkan Email Anda" required autofocus>
                         </div>
                     </div>
                     
@@ -118,7 +132,7 @@
                             <span class="input-group-text bg-light border-0 ps-3 pe-2 text-muted" style="border-radius: 0.75rem 0 0 0.75rem;">
                                 <i class="bi bi-lock"></i>
                             </span>
-                            <input type="password" class="form-control border-0 bg-light py-2" style="border-radius: 0;" id="password" name="password" placeholder="••••••••" required>
+                            <input type="password" class="form-control border-0 bg-light py-2" style="border-radius: 0;" id="password" name="password" placeholder="Masukkan Password Anda" required>
                             <span class="input-group-text bg-light border-0 pe-3 ps-2 text-muted" id="togglePassword" style="cursor: pointer; border-radius: 0 0.75rem 0.75rem 0;">
                                 <i class="bi bi-eye-slash"></i>
                             </span>

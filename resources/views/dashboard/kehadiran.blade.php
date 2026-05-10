@@ -159,6 +159,7 @@
                             <li><hr class="dropdown-divider mx-2"></li>
                             <li><a class="dropdown-item py-2 {{ request('status') == 'Hadir' ? 'active' : '' }}" href="javascript:void(0)" onclick="updateFilter('status', 'Hadir')">Hadir</a></li>
                             <li><a class="dropdown-item py-2 {{ request('status') == 'Alfa' ? 'active' : '' }}" href="javascript:void(0)" onclick="updateFilter('status', 'Alfa')">Alpha</a></li>
+                            <li><a class="dropdown-item py-2 {{ request('status') == 'Izin' ? 'active' : '' }}" href="javascript:void(0)" onclick="updateFilter('status', 'Izin')">Izin</a></li>
                         </ul>
                     </div>
                 </div>
@@ -219,6 +220,8 @@
                         <td class="text-center">
                             @if($presensi->status == 'Alfa')
                                 <span class="badge badge-soft badge-soft-danger px-4">Alpha</span>
+                            @elseif($presensi->status == 'Izin')
+                                <span class="badge badge-soft badge-soft-info px-4">Izin</span>
                             @else
                                 <span class="badge badge-soft badge-soft-success px-4">Hadir</span>
                             @endif

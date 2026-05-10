@@ -206,6 +206,60 @@
             border-color: #444;
         }
         
+        /* Premium Select Styles */
+        .premium-select-wrapper {
+            position: relative;
+        }
+        .premium-select-btn {
+            background-color: #fff;
+            border: 1px solid #edf2f9;
+            border-radius: 0.8rem;
+            padding: 0.6rem 1rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #4d5157;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.2s;
+            cursor: pointer;
+            width: 100%;
+        }
+        .premium-select-btn:hover {
+            border-color: #198754;
+            background-color: #f8f9fa;
+        }
+        .premium-select-btn:focus, .premium-select-btn.show {
+            border-color: #198754;
+            box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.15);
+            outline: 0;
+        }
+        .premium-select-btn::after {
+            display: none !important;
+        }
+        .premium-select-wrapper .dropdown-menu {
+            width: 100%;
+            margin-top: 5px !important;
+        }
+        .premium-select-wrapper .dropdown-item.active, 
+        .premium-select-wrapper .dropdown-item:active {
+            background-color: rgba(25, 135, 84, 0.1);
+            color: #198754;
+        }
+        
+        body.dark-mode .premium-select-btn {
+            background-color: #2c2c2c;
+            border-color: #444;
+            color: #adb5bd;
+        }
+        body.dark-mode .premium-select-btn:hover {
+            background-color: #333;
+        }
+        body.dark-mode .premium-select-wrapper .dropdown-menu {
+            background-color: #2c2c2c;
+        }
+
         /* Modern Select Styles */
         .form-select {
             border: 1px solid #edf2f9;
@@ -356,6 +410,10 @@
                             <i class="bi bi-clipboard2-check-fill"></i>
                             <span class="sidebar-text">Kehadiran Sholat</span>
                         </a>
+                        <a class="list-group-item list-group-item-action {{ request()->is('izin/manage') ? 'active' : '' }}" href="{{ route('izin.manage') }}">
+                            <i class="bi bi-file-earmark-check-fill"></i>
+                            <span class="sidebar-text">Kelola Izin</span>
+                        </a>
                     @endif
                     @if(auth()->user()->role === 'santri')
                         <a class="list-group-item list-group-item-action {{ request()->is('santri/dashboard') ? 'active' : '' }}" href="/santri/dashboard">
@@ -365,6 +423,10 @@
                         <a class="list-group-item list-group-item-action {{ request()->is('scan') ? 'active' : '' }}" href="/scan">
                             <i class="bi bi-qr-code-scan"></i>
                             <span class="sidebar-text">Scan Kehadiran</span>
+                        </a>
+                        <a class="list-group-item list-group-item-action {{ request()->is('izin') ? 'active' : '' }}" href="{{ route('izin.index') }}">
+                            <i class="bi bi-file-earmark-text-fill"></i>
+                            <span class="sidebar-text">Izin Saya</span>
                         </a>
                     @endif
                 @endauth

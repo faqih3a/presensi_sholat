@@ -24,12 +24,14 @@ class AsatidzController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
+            'wa_number' => 'nullable|string|max:20',
             'password' => 'required|string|min:5|confirmed',
         ]);
 
         User::create([
             'name' => $request->name,
             'email' => $request->email,
+            'wa_number' => $request->wa_number,
             'password' => Hash::make($request->password),
             'role' => 'asatidz',
         ]);
@@ -54,12 +56,14 @@ class AsatidzController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $asatidz->id,
+            'wa_number' => 'nullable|string|max:20',
             'password' => 'nullable|string|min:5|confirmed',
         ]);
 
         $data = [
             'name' => $request->name,
             'email' => $request->email,
+            'wa_number' => $request->wa_number,
         ];
 
         if ($request->filled('password')) {

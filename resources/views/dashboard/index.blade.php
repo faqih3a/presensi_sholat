@@ -298,7 +298,11 @@
                                     <div class="small text-muted"><i class="bi bi-easel me-1"></i>Kelas {{ $santri->kelas }}</div>
                                 </div>
                             </div>
-                            <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 rounded-pill px-3">Alpha</span>
+                            @if(($santri->current_status ?? 'Alfa') == 'Izin')
+                                <span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25 rounded-pill px-3">Izin</span>
+                            @else
+                                <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 rounded-pill px-3">Alpha</span>
+                            @endif
                         </li>
                     @empty
                         <li class="list-group-item text-center text-muted py-5">

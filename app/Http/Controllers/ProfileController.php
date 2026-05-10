@@ -21,6 +21,7 @@ class ProfileController extends Controller
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id],
+            'wa_number' => ['nullable', 'string', 'max:20'],
             'kelas' => ['nullable', 'string', 'max:50'],
             'avatar' => ['nullable', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
         ]);
@@ -28,6 +29,7 @@ class ProfileController extends Controller
         $userData = [
             'name' => $request->name,
             'email' => $request->email,
+            'wa_number' => $request->wa_number,
         ];
 
         // Handle Avatar Upload

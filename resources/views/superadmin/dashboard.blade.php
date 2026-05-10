@@ -11,54 +11,28 @@
 </div>
 
 <div class="row g-4">
-    <div class="col-md-3">
-        <div class="card border-0 shadow-sm rounded-4 p-3 h-100">
-            <div class="d-flex align-items-center gap-3">
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm rounded-4 p-4 h-100">
+            <div class="d-flex align-items-center gap-4">
                 <div class="bg-primary-subtle p-3 rounded-4 text-primary">
-                    <i class="bi bi-person-workspace fs-3"></i>
+                    <i class="bi bi-person-workspace fs-1"></i>
                 </div>
                 <div>
                     <div class="text-muted small fw-bold">TOTAL ASATIDZ</div>
-                    <div class="fs-4 fw-800">{{ $stats['total_asatidz'] }}</div>
+                    <div class="fs-2 fw-800">{{ $stats['total_asatidz'] }}</div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card border-0 shadow-sm rounded-4 p-3 h-100">
-            <div class="d-flex align-items-center gap-3">
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm rounded-4 p-4 h-100">
+            <div class="d-flex align-items-center gap-4">
                 <div class="bg-success-subtle p-3 rounded-4 text-success">
-                    <i class="bi bi-people-fill fs-3"></i>
+                    <i class="bi bi-people-fill fs-1"></i>
                 </div>
                 <div>
                     <div class="text-muted small fw-bold">TOTAL SANTRI</div>
-                    <div class="fs-4 fw-800">{{ $stats['total_santri'] }}</div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card border-0 shadow-sm rounded-4 p-3 h-100">
-            <div class="d-flex align-items-center gap-3">
-                <div class="bg-info-subtle p-3 rounded-4 text-info">
-                    <i class="bi bi-calendar-check fs-3"></i>
-                </div>
-                <div>
-                    <div class="text-muted small fw-bold">HADIR HARI INI</div>
-                    <div class="fs-4 fw-800">{{ $stats['total_presensi_today'] }}</div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card border-0 shadow-sm rounded-4 p-3 h-100">
-            <div class="d-flex align-items-center gap-3">
-                <div class="bg-danger-subtle p-3 rounded-4 text-danger">
-                    <i class="bi bi-calendar-x fs-3"></i>
-                </div>
-                <div>
-                    <div class="text-muted small fw-bold">ALFA HARI INI</div>
-                    <div class="fs-4 fw-800">{{ $stats['total_alfa_today'] }}</div>
+                    <div class="fs-2 fw-800">{{ $stats['total_santri'] }}</div>
                 </div>
             </div>
         </div>

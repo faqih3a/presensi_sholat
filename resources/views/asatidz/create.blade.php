@@ -30,6 +30,13 @@
                     @error('email') <div class="invalid-feedback">{{ $message }}</div> @enderror
                 </div>
                 
+                <div class="mb-3">
+                    <label class="form-label small fw-bold text-muted">NOMOR WHATSAPP</label>
+                    <input type="text" name="wa_number" class="form-control rounded-3 @error('wa_number') is-invalid @enderror" value="{{ old('wa_number') }}" placeholder="Contoh: 628123456789">
+                    <small class="text-muted mt-1 d-block">Gunakan format internasional tanpa tanda + (Contoh: 628123456789)</small>
+                    @error('wa_number') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                </div>
+                
                 <div class="row mb-3">
                     <div class="col-md-6">
                         <label class="form-label small fw-bold text-muted">PASSWORD</label>

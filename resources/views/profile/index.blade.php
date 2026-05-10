@@ -238,6 +238,13 @@
                                     @error('email') <div class="invalid-feedback">{{ $message }}</div> @enderror
                                 </div>
                                 
+                                <div class="col-md-6">
+                                    <label class="form-label-custom">Nomor WhatsApp</label>
+                                    <input type="text" name="wa_number" class="form-control form-control-custom @error('wa_number') is-invalid @enderror" value="{{ old('wa_number', $user->wa_number) }}" placeholder="628123456789">
+                                    @error('wa_number') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                    <div class="form-text small opacity-75">Gunakan format 628xxx (tanpa +). Digunakan untuk notifikasi sistem.</div>
+                                </div>
+                                
                                 @if($user->role === 'santri' && $user->santri)
                                     <div class="col-md-6">
                                         <label class="form-label-custom">Kelas</label>

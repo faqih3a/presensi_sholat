@@ -233,18 +233,41 @@
                                 <label for="nama" class="form-label fw-bold small text-muted text-uppercase">Nama Lengkap</label>
                                 <input type="text" class="form-control py-2" id="nama" name="nama" required placeholder="Ahmad Al-Faqih">
                             </div>
-                            <div class="mb-3">
-                                <label for="kelas" class="form-label fw-bold small text-muted text-uppercase">Kelas</label>
-                                <select class="form-select py-2" id="kelas" name="kelas" required>
-                                    <option value="" selected disabled>-- Pilih Kelas --</option>
-                                    <option value="7 MTs">7 MTs</option>
-                                    <option value="8 MTs">8 MTs</option>
-                                    <option value="9 MTs">9 MTs</option>
-                                    <option value="10 MA">10 MA</option>
-                                    <option value="11 MA">11 MA</option>
-                                    <option value="12 MA">12 MA</option>
-                                </select>
-                            </div>
+                             <div class="mb-3">
+                                 <label class="form-label fw-bold small text-muted text-uppercase">Kelas</label>
+                                 <div class="premium-select-wrapper">
+                                     <button class="premium-select-btn dropdown-toggle py-2" type="button" id="kelasDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                         <span id="selected-kelas-text">-- Pilih Kelas --</span>
+                                         <i class="bi bi-chevron-down small text-muted"></i>
+                                     </button>
+                                     <ul class="dropdown-menu shadow border-0" aria-labelledby="kelasDropdown">
+                                         <li><a class="dropdown-item py-2" href="javascript:void(0)" onclick="selectKelas('7 MTs')">7 MTs</a></li>
+                                         <li><a class="dropdown-item py-2" href="javascript:void(0)" onclick="selectKelas('8 MTs')">8 MTs</a></li>
+                                         <li><a class="dropdown-item py-2" href="javascript:void(0)" onclick="selectKelas('9 MTs')">9 MTs</a></li>
+                                         <li><a class="dropdown-item py-2" href="javascript:void(0)" onclick="selectKelas('10 MA')">10 MA</a></li>
+                                         <li><a class="dropdown-item py-2" href="javascript:void(0)" onclick="selectKelas('11 MA')">11 MA</a></li>
+                                         <li><a class="dropdown-item py-2" href="javascript:void(0)" onclick="selectKelas('12 MA')">12 MA</a></li>
+                                     </ul>
+                                     <input type="hidden" name="kelas" id="kelas_input" required>
+                                 </div>
+                             </div>
+
+                             <script>
+                                 function selectKelas(val) {
+                                     document.getElementById('kelas_input').value = val;
+                                     document.getElementById('selected-kelas-text').innerText = val;
+                                     
+                                     // Update active state
+                                     const items = document.querySelectorAll('#kelasDropdown + .dropdown-menu .dropdown-item');
+                                     items.forEach(item => {
+                                         if (item.innerText === val) {
+                                             item.classList.add('active');
+                                         } else {
+                                             item.classList.remove('active');
+                                         }
+                                     });
+                                 }
+                             </script>
                             <div class="mb-3">
                                 <label for="email" class="form-label fw-bold small text-muted text-uppercase">Email</label>
                                 <input type="email" class="form-control py-2" id="email" name="email" required placeholder="santri@thursina.id">

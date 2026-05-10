@@ -41,27 +41,38 @@ class DashboardController extends Controller
         }
         $totalAlfa = $alfaQuery->distinct('santri_id')->count('santri_id');
 
-        // Untuk tampilan dashboard, "Tidak Hadir" bisa berarti Alfa + Belum Presensi (untuk today)
-        // Namun jika user ingin spesifik Alfa, kita gunakan totalAlfa.
-        // Kita gunakan logika: Jika periode hari ini, Tidak Hadir = Total - Hadir.
-        // Jika periode Minggu/Bulan, Tidak Hadir = Total Alfa unik.
-        // Untuk tampilan dashboard, "Tidak Hadir" sekarang merujuk spesifik pada yang tercatat Alfa
-        // (karena syncAlfas sudah dipanggil di atas dan hanya mencatat Alfa jika waktu sudah lewat)
-        $tidakHadir = $totalAlfa;
+        // Hitung santri yang Izin (status Izin) dalam periode tersebut
+        $izinQuery = \App\Models\Presensi::whereBetween('tanggal', [$startDate, $endDate])->where('status', 'Izin');
+        if ($waktuSholat) {
+            $izinQuery->where('waktu_sholat', $waktuSholat);
+        }
+        $totalIzin = $izinQuery->distinct('santri_id')->count('santri_id');
+
+        // Untuk tampilan dashboard, "Tidak Hadir" mencakup Alfa dan Izin
+        $tidakHadir = $totalAlfa + $totalIzin;
         
         // Persentase kehadiran
         $persentase = $totalSantri > 0 ? round(($hadirHariIni / $totalSantri) * 100, 1) : 0;
 
-        // Fetch absent santris
+        // Fetch absent santris (Alfa or Izin)
         $absentSantris = collect();
-        // Ambil santri yang memang tercatat Alfa dalam periode/waktu tersebut
-        $absentSantriIds = \App\Models\Presensi::whereBetween('tanggal', [$startDate, $endDate])
-                                            ->where('status', 'Alfa');
+        $absentRecords = \App\Models\Presensi::whereBetween('tanggal', [$startDate, $endDate])
+                                            ->whereIn('status', ['Alfa', 'Izin']);
         if ($waktuSholat) {
-            $absentSantriIds->where('waktu_sholat', $waktuSholat);
+            $absentRecords->where('waktu_sholat', $waktuSholat);
         }
-        $absentSantriIds = $absentSantriIds->distinct('santri_id')->pluck('santri_id');
-        $absentSantris = \App\Models\Santri::whereIn('id', $absentSantriIds)->get();
+        
+        $absentRecords = $absentRecords->get();
+        $absentSantriIds = $absentRecords->pluck('santri_id')->unique();
+        $santriModels = \App\Models\Santri::whereIn('id', $absentSantriIds)->get()->keyBy('id');
+
+        $absentSantris = $absentRecords->map(function($record) use ($santriModels) {
+            $santri = $santriModels->get($record->santri_id);
+            if ($santri) {
+                $santri->current_status = $record->status;
+            }
+            return $santri;
+        })->filter()->unique('id');
 
         // Data untuk grafik kehadiran
         $chartLabels = [];
@@ -128,12 +139,19 @@ class DashboardController extends Controller
                     if ($presensiHariIni->has($santri->id)) {
                         return $presensiHariIni->get($santri->id);
                     } else {
+                        // Cek apakah santri punya izin yang disetujui hari ini
+                        $hasIzin = \App\Models\Izin::where('user_id', $santri->user_id)
+                                                ->where('status', 'Disetujui')
+                                                ->whereDate('tanggal_mulai', '<=', $tanggal)
+                                                ->whereDate('tanggal_selesai', '>=', $tanggal)
+                                                ->exists();
+
                         return (object) [
                             'santri' => $santri,
                             'waktu_sholat' => $waktuSholat,
                             'tanggal' => $tanggal,
                             'waktu_hadir' => null,
-                            'status' => 'Alfa'
+                            'status' => $hasIzin ? 'Izin' : 'Alfa'
                         ];
                     }
                 });
@@ -207,12 +225,19 @@ class DashboardController extends Controller
                 if ($presensiHariIni->has($santri->id)) {
                     return $presensiHariIni->get($santri->id);
                 } else {
+                    // Cek apakah santri punya izin yang disetujui hari ini
+                    $hasIzin = \App\Models\Izin::where('user_id', $santri->user_id)
+                                            ->where('status', 'Disetujui')
+                                            ->whereDate('tanggal_mulai', '<=', $tanggal)
+                                            ->whereDate('tanggal_selesai', '>=', $tanggal)
+                                            ->exists();
+
                     return (object) [
                         'santri' => $santri,
                         'waktu_sholat' => $waktuSholat,
                         'tanggal' => $tanggal,
                         'waktu_hadir' => null,
-                        'status' => 'Alfa'
+                        'status' => $hasIzin ? 'Izin' : 'Alfa'
                     ];
                 }
             });
@@ -311,7 +336,7 @@ class DashboardController extends Controller
             'Isya' => \Carbon\Carbon::parse($today . ' 23:59:59', 'Asia/Jakarta'), // Batas akhir hari
         ];
 
-        $santriIds = \App\Models\Santri::pluck('id');
+        $santris = \App\Models\Santri::all();
 
         foreach ($times as $sholat => $endTime) {
             if ($now->greaterThan($endTime)) {
@@ -321,22 +346,31 @@ class DashboardController extends Controller
                                             ->pluck('santri_id')
                                             ->toArray();
 
-                $absentSantriIds = $santriIds->diff($presentSantriIds);
+                foreach ($santris as $santri) {
+                    if (!in_array($santri->id, $presentSantriIds)) {
+                        // Cek apakah santri punya izin yang disetujui hari ini
+                        $hasIzin = \App\Models\Izin::where('user_id', $santri->user_id)
+                                                ->where('status', 'Disetujui')
+                                                ->whereDate('tanggal_mulai', '<=', $today)
+                                                ->whereDate('tanggal_selesai', '>=', $today)
+                                                ->exists();
+                        
+                        $status = $hasIzin ? 'Izin' : 'Alfa';
 
-                foreach ($absentSantriIds as $santriId) {
-                    Presensi::firstOrCreate([
-                        'santri_id' => $santriId,
-                        'tanggal' => $today,
-                        'waktu_sholat' => $sholat,
-                    ], [
-                        'status' => 'Alfa',
-                        'waktu_hadir' => null
-                    ]);
+                        Presensi::firstOrCreate([
+                            'santri_id' => $santri->id,
+                            'tanggal' => $today,
+                            'waktu_sholat' => $sholat,
+                        ], [
+                            'status' => $status,
+                            'waktu_hadir' => null
+                        ]);
+                    }
                 }
             }
         }
         
-        // Opsional: Cek juga hari kemarin jika ada yang tertinggal (untuk jaga-jaga)
+        // Opsional: Cek juga hari kemarin jika ada yang tertinggal
         $yesterday = $now->copy()->subDay()->format('Y-m-d');
         $hasYesterdaySync = \Illuminate\Support\Facades\Cache::get('sync_alfa_' . $yesterday);
         if (!$hasYesterdaySync) {
@@ -346,17 +380,25 @@ class DashboardController extends Controller
                                             ->pluck('santri_id')
                                             ->toArray();
 
-                $absentSantriIds = $santriIds->diff($presentSantriIds);
+                foreach ($santris as $santri) {
+                    if (!in_array($santri->id, $presentSantriIds)) {
+                        $hasIzin = \App\Models\Izin::where('user_id', $santri->user_id)
+                                                ->where('status', 'Disetujui')
+                                                ->whereDate('tanggal_mulai', '<=', $yesterday)
+                                                ->whereDate('tanggal_selesai', '>=', $yesterday)
+                                                ->exists();
+                        
+                        $status = $hasIzin ? 'Izin' : 'Alfa';
 
-                foreach ($absentSantriIds as $santriId) {
-                    Presensi::firstOrCreate([
-                        'santri_id' => $santriId,
-                        'tanggal' => $yesterday,
-                        'waktu_sholat' => $sysName,
-                    ], [
-                        'status' => 'Alfa',
-                        'waktu_hadir' => null
-                    ]);
+                        Presensi::firstOrCreate([
+                            'santri_id' => $santri->id,
+                            'tanggal' => $yesterday,
+                            'waktu_sholat' => $sysName,
+                        ], [
+                            'status' => $status,
+                            'waktu_hadir' => null
+                        ]);
+                    }
                 }
             }
             \Illuminate\Support\Facades\Cache::put('sync_alfa_' . $yesterday, true, 86400);
