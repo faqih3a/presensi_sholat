@@ -38,9 +38,13 @@
                             <tr>
                                 <td class="ps-4">
                                     <div class="d-flex align-items-center">
-                                        <div class="avatar-sm bg-success-subtle text-success rounded-circle d-flex align-items-center justify-content-center me-3 shadow-sm" style="width: 40px; height: 40px;">
-                                            <i class="bi bi-person-fill"></i>
-                                        </div>
+                                        @if($izin->user->role === 'santri' && $izin->user->santri && $izin->user->santri->foto_referensi)
+                                            <img src="{{ asset('storage/santri_fotos/' . $izin->user->santri->foto_referensi) }}" alt="Profile" class="rounded-circle me-3 shadow-sm object-fit-cover" style="width: 40px; height: 40px; border: 2px solid #fff;">
+                                        @else
+                                            <div class="avatar-sm bg-success-subtle text-success rounded-circle d-flex align-items-center justify-content-center me-3 shadow-sm" style="width: 40px; height: 40px;">
+                                                <i class="bi bi-person-fill"></i>
+                                            </div>
+                                        @endif
                                         <div>
                                             <div class="fw-bold text-dark">{{ $izin->user->name }}</div>
                                             <div class="small text-muted">{{ $izin->user->role }}</div>

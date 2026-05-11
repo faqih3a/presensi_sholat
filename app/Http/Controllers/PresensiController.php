@@ -27,7 +27,7 @@ class PresensiController extends Controller
             }
         }
 
-        return view('presensi.scan', compact('suggestedSholat'));
+        return view('presensi.scan', compact('suggestedSholat', 'jadwal'));
     }
 
     public function store(Request $request)
@@ -55,38 +55,70 @@ class PresensiController extends Controller
         $isValidTime = $this->isTimeInPrayerWindow($currentTime, $selectedWaktu, $jadwal);
 
         if (!$isValidTime) {
-            $fajr = $jadwal['Fajr'] ?? '04:00';
+            $currentActiveSholat = "Tidak Ada";
+            foreach (['Subuh', 'Dzuhur', 'Ashar', 'Maghrib', 'Isya'] as $sholatName) {
+                if ($this->isTimeInPrayerWindow($currentTime, $sholatName, $jadwal)) {
+                    $currentActiveSholat = $sholatName;
+                    break;
+                }
+            }
+
             return response()->json([
                 'success' => false,
-                'message' => "Saat ini ($currentTime) bukan waktu untuk presensi sholat $selectedWaktu. Jadwal hari ini: " . json_encode($jadwal),
+                'message' => "Sekarang bukan waktu sholat $selectedWaktu (Saat ini: $currentActiveSholat), Tidak dapat melakukan presensi.",
             ], 400);
         }
 
         $today = $now->format('Y-m-d');
 
-        $exists = Presensi::where('santri_id', $request->santri_id)
+        // Check if santri has an approved permit (Izin) for today
+        $santri = \App\Models\Santri::find($request->santri_id);
+        $hasIzin = \App\Models\Izin::where('user_id', $santri->user_id)
+                                ->where('status', 'Disetujui')
+                                ->whereDate('tanggal_mulai', '<=', $today)
+                                ->whereDate('tanggal_selesai', '>=', $today)
+                                ->exists();
+
+        $status = $hasIzin ? 'Izin' : 'Hadir';
+
+        $existingRecord = Presensi::where('santri_id', $request->santri_id)
             ->where('waktu_sholat', $selectedWaktu)
             ->where('tanggal', $today)
-            ->exists();
+            ->first();
 
-        if ($exists) {
-            return response()->json([
-                'success' => false,
-                'message' => "Anda sudah melakukan presensi untuk sholat $selectedWaktu hari ini.",
-            ], 400);
+        if ($existingRecord) {
+            // If it's already "Hadir", block duplicate
+            if ($existingRecord->status === 'Hadir') {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Anda sudah melakukan presensi untuk sholat $selectedWaktu hari ini.",
+                ], 400);
+            }
+            
+            // If it was "Alfa" or "Izin" (from sync), and now they scan, we update it
+            // but if they have an Izin, it STAYS "Izin" as per user request.
+            $existingRecord->update([
+                'waktu_hadir' => $currentTime,
+                'status' => $status
+            ]);
+            $presensi = $existingRecord;
+        } else {
+            $presensi = Presensi::create([
+                'santri_id' => $request->santri_id,
+                'waktu_sholat' => $selectedWaktu,
+                'tanggal' => $today,
+                'waktu_hadir' => $currentTime,
+                'status' => $status,
+            ]);
         }
 
-        $presensi = Presensi::create([
-            'santri_id' => $request->santri_id,
-            'waktu_sholat' => $selectedWaktu,
-            'tanggal' => $today,
-            'waktu_hadir' => $currentTime,
-            'status' => 'Hadir',
-        ]);
+        $message = $hasIzin 
+            ? "Presensi dicatat sebagai IZIN (Anda memiliki izin yang disetujui)." 
+            : "Presensi sholat $selectedWaktu berhasil dicatat.";
 
         return response()->json([
             'success' => true,
-            'message' => "Presensi sholat $selectedWaktu berhasil dicatat.",
+            'message' => $message,
             'data' => $presensi->load('santri')
         ]);
     }

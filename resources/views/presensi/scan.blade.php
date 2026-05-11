@@ -141,6 +141,40 @@
 @endpush
 
 @section('content')
+@php
+    $sholatList = ['Subuh', 'Dzuhur', 'Ashar', 'Maghrib', 'Isya'];
+    $jadwalInfo = [];
+    
+    if ($jadwal) {
+        $getStart = function($timeStr) {
+            try {
+                return \Carbon\Carbon::createFromFormat('H:i', $timeStr)->subMinutes(30)->format('H:i');
+            } catch (\Exception $e) {
+                return $timeStr;
+            }
+        };
+
+        $apiTimes = [
+            'Subuh' => $jadwal['Fajr'],
+            'Dzuhur' => $jadwal['Dhuhr'],
+            'Ashar' => $jadwal['Asr'],
+            'Maghrib' => $jadwal['Maghrib'],
+            'Isya' => $jadwal['Isha'],
+        ];
+
+        foreach ($sholatList as $sholat) {
+            $start = $getStart($apiTimes[$sholat]);
+            $end = match($sholat) {
+                'Subuh' => $apiTimes['Dzuhur'],
+                'Dzuhur' => $apiTimes['Ashar'],
+                'Ashar' => $apiTimes['Maghrib'],
+                'Maghrib' => $apiTimes['Isya'],
+                'Isya' => $getStart($apiTimes['Subuh']), // Ends 30 mins before next Subuh
+            };
+            $jadwalInfo[$sholat] = ['start' => $start, 'end' => $end];
+        }
+    }
+@endphp
 <div class="scanner-container py-4">
     <div class="text-center mb-2">
         <h1 class="h2 fw-bold text-dark">Kamera Presensi Sholat</h1>
@@ -152,30 +186,19 @@
         <div class="card-body p-4 p-md-5">
             <h5 class="card-title fw-bold text-center mb-4 text-dark">Pilih Waktu Sholat</h5>
             <div class="d-flex flex-wrap justify-content-center gap-3 mb-5">
+                @foreach($sholatList as $sholat)
                 <label class="sholat-option">
-                    <input type="radio" name="waktu_sholat" value="Subuh" {{ $suggestedSholat == 'Subuh' ? 'checked' : '' }}>
-                    <span>Subuh</span>
+                    <input type="radio" name="waktu_sholat" value="{{ $sholat }}" {{ $suggestedSholat == $sholat ? 'checked' : '' }}>
+                    <span class="d-flex flex-column align-items-center py-2 px-3">
+                        <span class="sholat-name">{{ $sholat }}</span>
+                        @if(isset($jadwalInfo[$sholat]))
+                            <span class="sholat-time x-small opacity-75 fw-normal mt-1" style="font-size: 0.7rem;">
+                                {{ $jadwalInfo[$sholat]['start'] }} - {{ $jadwalInfo[$sholat]['end'] }}
+                            </span>
+                        @endif
+                    </span>
                 </label>
-
-                <label class="sholat-option">
-                    <input type="radio" name="waktu_sholat" value="Dzuhur" {{ $suggestedSholat == 'Dzuhur' ? 'checked' : '' }}>
-                    <span>Dzuhur</span>
-                </label>
-
-                <label class="sholat-option">
-                    <input type="radio" name="waktu_sholat" value="Ashar" {{ $suggestedSholat == 'Ashar' ? 'checked' : '' }}>
-                    <span>Ashar</span>
-                </label>
-
-                <label class="sholat-option">
-                    <input type="radio" name="waktu_sholat" value="Maghrib" {{ $suggestedSholat == 'Maghrib' ? 'checked' : '' }}>
-                    <span>Maghrib</span>
-                </label>
-
-                <label class="sholat-option">
-                    <input type="radio" name="waktu_sholat" value="Isya" {{ $suggestedSholat == 'Isya' ? 'checked' : '' }}>
-                    <span>Isya</span>
-                </label>
+                @endforeach
             </div>
             <div class="d-grid">
                 <button type="button" class="btn btn-gradient-success btn-lg fw-bold py-3" id="btn-mulai-presensi" disabled style="border-radius: 1rem;">

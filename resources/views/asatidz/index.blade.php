@@ -37,9 +37,13 @@
                 <tr>
                     <td class="ps-4">
                         <div class="d-flex align-items-center gap-3">
-                            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                                {{ substr($u->name, 0, 1) }}
-                            </div>
+                            @if($u->avatar)
+                                <img src="{{ asset('storage/avatars/' . $u->avatar) }}" alt="Avatar" class="rounded-circle object-fit-cover shadow-sm" style="width: 40px; height: 40px; border: 2px solid #fff;">
+                            @else
+                                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 40px; height: 40px;">
+                                    {{ substr($u->name, 0, 1) }}
+                                </div>
+                            @endif
                             <span class="fw-bold">{{ $u->name }}</span>
                         </div>
                     </td>

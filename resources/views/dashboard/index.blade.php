@@ -157,6 +157,106 @@
     </div>
 </div>
 
+<!-- Row for Izin and Alfa lists -->
+<div class="row g-4 mb-4">
+    <!-- Izin Card -->
+    <div class="col-lg-6">
+        <div class="card card-stats h-100 p-3">
+            <div class="card-body p-0">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="card-title fw-bold text-dark mb-0">Santri Izin Hari Ini</h5>
+                    <span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25 rounded-pill px-3">{{ $izinTodayRecords->count() }} Santri</span>
+                </div>
+                
+                <div class="overflow-auto" style="max-height: 350px;">
+                    <ul class="list-group list-group-flush">
+                        @forelse($izinTodayRecords as $santriId => $records)
+                            @php 
+                                $santri = $records->first()->santri;
+                                $sholats = $records->pluck('waktu_sholat')->toArray();
+                                $isFullDay = in_array($santri->id, $fullDayIzinSantriIds);
+                            @endphp
+                            <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-3 border-light">
+                                <div class="d-flex align-items-center gap-3">
+                                    @if($santri->foto_referensi)
+                                        <img src="{{ asset('storage/santri_fotos/' . $santri->foto_referensi) }}" alt="Foto" class="rounded-circle object-fit-cover" style="width: 40px; height: 40px;">
+                                    @else
+                                        <div class="bg-light text-secondary rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                            <i class="bi bi-person fs-5"></i>
+                                        </div>
+                                    @endif
+                                    <div>
+                                        <div class="fw-semibold text-dark">{{ $santri->nama }} <span class="small text-muted fw-normal">({{ $santri->kelas }})</span></div>
+                                        <div class="small text-muted">
+                                            @if($isFullDay)
+                                                <span class="text-info fw-medium"><i class="bi bi-calendar-check me-1"></i>1 Hari Full</span>
+                                            @else
+                                                <i class="bi bi-clock me-1"></i>{{ implode(', ', $sholats) }}
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                                <span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25 rounded-pill px-2" style="font-size: 0.7rem;">Izin</span>
+                            </li>
+                        @empty
+                            <li class="list-group-item text-center text-muted py-5 border-0">
+                                <i class="bi bi-emoji-smile fs-2 d-block mb-2"></i>
+                                Tidak ada santri yang izin hari ini.
+                            </li>
+                        @endforelse
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alfa Card -->
+    <div class="col-lg-6">
+        <div class="card card-stats h-100 p-3">
+            <div class="card-body p-0">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="card-title fw-bold text-dark mb-0">Santri Alfa Hari Ini</h5>
+                    <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 rounded-pill px-3">{{ $alfaTodayRecords->count() }} Santri</span>
+                </div>
+                
+                <div class="overflow-auto" style="max-height: 350px;">
+                    <ul class="list-group list-group-flush">
+                        @forelse($alfaTodayRecords as $santriId => $records)
+                            @php 
+                                $santri = $records->first()->santri;
+                                $sholats = $records->pluck('waktu_sholat')->toArray();
+                            @endphp
+                            <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-3 border-light">
+                                <div class="d-flex align-items-center gap-3">
+                                    @if($santri->foto_referensi)
+                                        <img src="{{ asset('storage/santri_fotos/' . $santri->foto_referensi) }}" alt="Foto" class="rounded-circle object-fit-cover" style="width: 40px; height: 40px;">
+                                    @else
+                                        <div class="bg-light text-secondary rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                            <i class="bi bi-person fs-5"></i>
+                                        </div>
+                                    @endif
+                                    <div>
+                                        <div class="fw-semibold text-dark">{{ $santri->nama }} <span class="small text-muted fw-normal">({{ $santri->kelas }})</span></div>
+                                        <div class="small text-danger">
+                                            <i class="bi bi-exclamation-triangle me-1"></i>{{ implode(', ', $sholats) }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 rounded-pill px-2" style="font-size: 0.7rem;">Alfa</span>
+                            </li>
+                        @empty
+                            <li class="list-group-item text-center text-muted py-5 border-0">
+                                <i class="bi bi-check-circle fs-2 text-success d-block mb-2"></i>
+                                Alhamdulillah, tidak ada santri alfa hari ini.
+                            </li>
+                        @endforelse
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Main Chart -->
 <div class="card card-stats mb-4 p-3">
     <div class="card-body p-0">

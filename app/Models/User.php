@@ -23,6 +23,7 @@ class User extends Authenticatable
         'wa_number',
         'password',
         'role',
+        'avatar',
     ];
 
     /**

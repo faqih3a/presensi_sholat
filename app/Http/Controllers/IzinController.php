@@ -65,7 +65,7 @@ class IzinController extends Controller
             abort(403);
         }
 
-        $izins = Izin::with('user')->latest()->get();
+        $izins = Izin::with('user.santri')->latest()->get();
         return view('izin.manage', compact('izins'));
     }
 
