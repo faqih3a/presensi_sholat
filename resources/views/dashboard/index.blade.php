@@ -52,6 +52,31 @@
     body.dark-mode .task-checkbox {
         background-color: rgba(25, 135, 84, 0.2);
     }
+    
+    .avatar-group img, .avatar-group .avatar-placeholder {
+        width: 35px;
+        height: 35px;
+        border: 2px solid #fff;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        margin-left: -12px;
+        transition: all 0.2s ease;
+        object-fit: cover;
+    }
+    .avatar-group img:first-child, .avatar-group .avatar-placeholder:first-child {
+        margin-left: 0;
+    }
+    .avatar-group img:hover {
+        transform: translateY(-3px);
+        z-index: 5;
+        margin-right: 5px;
+    }
+    .dropdown-menu-list {
+        min-width: 320px;
+        max-height: 400px;
+        overflow-y: auto;
+        border-radius: 1rem;
+        padding: 0.75rem;
+    }
 </style>
 @endpush
 
@@ -168,43 +193,67 @@
                     <span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25 rounded-pill px-3">{{ $izinTodayRecords->count() }} Santri</span>
                 </div>
                 
-                <div class="overflow-auto" style="max-height: 350px;">
-                    <ul class="list-group list-group-flush">
-                        @forelse($izinTodayRecords as $santriId => $records)
-                            @php 
-                                $santri = $records->first()->santri;
-                                $sholats = $records->pluck('waktu_sholat')->toArray();
-                                $isFullDay = in_array($santri->id, $fullDayIzinSantriIds);
-                            @endphp
-                            <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-3 border-light">
-                                <div class="d-flex align-items-center gap-3">
+                <div class="mt-2">
+                    @if($izinTodayRecords->isNotEmpty())
+                        <div class="d-flex align-items-center justify-content-between bg-light p-3 rounded-4">
+                            <div class="avatar-group d-flex align-items-center">
+                                @foreach($izinTodayRecords->take(6) as $santriId => $records)
+                                    @php $santri = $records->first()->santri; @endphp
                                     @if($santri->foto_referensi)
-                                        <img src="{{ asset('storage/santri_fotos/' . $santri->foto_referensi) }}" alt="Foto" class="rounded-circle object-fit-cover" style="width: 40px; height: 40px;">
+                                        <img src="{{ asset('storage/santri_fotos/' . $santri->foto_referensi) }}" class="rounded-circle" title="{{ $santri->nama }}">
                                     @else
-                                        <div class="bg-light text-secondary rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                                            <i class="bi bi-person fs-5"></i>
+                                        <div class="avatar-placeholder bg-info text-white rounded-circle d-flex align-items-center justify-content-center" title="{{ $santri->nama }}">
+                                            <i class="bi bi-person" style="font-size: 0.8rem;"></i>
                                         </div>
                                     @endif
-                                    <div>
-                                        <div class="fw-semibold text-dark">{{ $santri->nama }} <span class="small text-muted fw-normal">({{ $santri->kelas }})</span></div>
-                                        <div class="small text-muted">
-                                            @if($isFullDay)
-                                                <span class="text-info fw-medium"><i class="bi bi-calendar-check me-1"></i>1 Hari Full</span>
-                                            @else
-                                                <i class="bi bi-clock me-1"></i>{{ implode(', ', $sholats) }}
-                                            @endif
-                                        </div>
+                                @endforeach
+                                @if($izinTodayRecords->count() > 6)
+                                    <div class="avatar-placeholder bg-white text-muted rounded-circle d-flex align-items-center justify-content-center fw-bold small">
+                                        +{{ $izinTodayRecords->count() - 6 }}
                                     </div>
-                                </div>
-                                <span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25 rounded-pill px-2" style="font-size: 0.7rem;">Izin</span>
-                            </li>
-                        @empty
-                            <li class="list-group-item text-center text-muted py-5 border-0">
-                                <i class="bi bi-emoji-smile fs-2 d-block mb-2"></i>
-                                Tidak ada santri yang izin hari ini.
-                            </li>
-                        @endforelse
-                    </ul>
+                                @endif
+                            </div>
+                            
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-white shadow-sm border rounded-3 dropdown-toggle fw-bold text-info py-2 px-3" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-person-lines-fill me-1"></i> Lihat Daftar
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 dropdown-menu-list">
+                                    <li class="px-3 py-2 mb-2 border-bottom">
+                                        <div class="fw-bold text-dark">Santri Izin</div>
+                                        <div class="small text-muted">{{ $izinTodayRecords->count() }} orang hari ini</div>
+                                    </li>
+                                    @foreach($izinTodayRecords as $santriId => $records)
+                                        @php 
+                                            $santri = $records->first()->santri;
+                                            $sholats = $records->pluck('waktu_sholat')->toArray();
+                                            $isFullDay = in_array($santri->id, $fullDayIzinSantriIds);
+                                        @endphp
+                                        <li class="px-3 py-2 border-bottom border-light last-child-border-0">
+                                            <div class="d-flex align-items-center gap-2">
+                                                <div class="fw-semibold text-dark small">{{ $loop->iteration }}. {{ $santri->nama }}</div>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center mt-1">
+                                                <span class="x-small text-muted"><i class="bi bi-door-open me-1"></i>{{ $santri->kelas }}</span>
+                                                <span class="badge bg-info bg-opacity-10 text-info x-small">
+                                                    @if($isFullDay)
+                                                        Full Day
+                                                    @else
+                                                        {{ implode(', ', $sholats) }}
+                                                    @endif
+                                                </span>
+                                            </div>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        </div>
+                    @else
+                        <div class="text-center py-4 bg-light rounded-4">
+                            <i class="bi bi-emoji-smile fs-3 text-muted d-block mb-2"></i>
+                            <p class="text-muted small mb-0">Tidak ada santri yang izin hari ini.</p>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>
@@ -219,38 +268,62 @@
                     <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 rounded-pill px-3">{{ $alfaTodayRecords->count() }} Santri</span>
                 </div>
                 
-                <div class="overflow-auto" style="max-height: 350px;">
-                    <ul class="list-group list-group-flush">
-                        @forelse($alfaTodayRecords as $santriId => $records)
-                            @php 
-                                $santri = $records->first()->santri;
-                                $sholats = $records->pluck('waktu_sholat')->toArray();
-                            @endphp
-                            <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-3 border-light">
-                                <div class="d-flex align-items-center gap-3">
+                <div class="mt-2">
+                    @if($alfaTodayRecords->isNotEmpty())
+                        <div class="d-flex align-items-center justify-content-between bg-light p-3 rounded-4">
+                            <div class="avatar-group d-flex align-items-center">
+                                @foreach($alfaTodayRecords->take(6) as $santriId => $records)
+                                    @php $santri = $records->first()->santri; @endphp
                                     @if($santri->foto_referensi)
-                                        <img src="{{ asset('storage/santri_fotos/' . $santri->foto_referensi) }}" alt="Foto" class="rounded-circle object-fit-cover" style="width: 40px; height: 40px;">
+                                        <img src="{{ asset('storage/santri_fotos/' . $santri->foto_referensi) }}" class="rounded-circle" title="{{ $santri->nama }}">
                                     @else
-                                        <div class="bg-light text-secondary rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                                            <i class="bi bi-person fs-5"></i>
+                                        <div class="avatar-placeholder bg-danger text-white rounded-circle d-flex align-items-center justify-content-center" title="{{ $santri->nama }}">
+                                            <i class="bi bi-person" style="font-size: 0.8rem;"></i>
                                         </div>
                                     @endif
-                                    <div>
-                                        <div class="fw-semibold text-dark">{{ $santri->nama }} <span class="small text-muted fw-normal">({{ $santri->kelas }})</span></div>
-                                        <div class="small text-danger">
-                                            <i class="bi bi-exclamation-triangle me-1"></i>{{ implode(', ', $sholats) }}
-                                        </div>
+                                @endforeach
+                                @if($alfaTodayRecords->count() > 6)
+                                    <div class="avatar-placeholder bg-white text-muted rounded-circle d-flex align-items-center justify-content-center fw-bold small">
+                                        +{{ $alfaTodayRecords->count() - 6 }}
                                     </div>
-                                </div>
-                                <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 rounded-pill px-2" style="font-size: 0.7rem;">Alfa</span>
-                            </li>
-                        @empty
-                            <li class="list-group-item text-center text-muted py-5 border-0">
-                                <i class="bi bi-check-circle fs-2 text-success d-block mb-2"></i>
-                                Alhamdulillah, tidak ada santri alfa hari ini.
-                            </li>
-                        @endforelse
-                    </ul>
+                                @endif
+                            </div>
+                            
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-white shadow-sm border rounded-3 dropdown-toggle fw-bold text-danger py-2 px-3" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-exclamation-circle me-1"></i> Lihat Daftar
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 dropdown-menu-list">
+                                    <li class="px-3 py-2 mb-2 border-bottom">
+                                        <div class="fw-bold text-dark">Santri Alfa</div>
+                                        <div class="small text-muted">{{ $alfaTodayRecords->count() }} orang hari ini</div>
+                                    </li>
+                                    @foreach($alfaTodayRecords as $santriId => $records)
+                                        @php 
+                                            $santri = $records->first()->santri;
+                                            $sholats = $records->pluck('waktu_sholat')->toArray();
+                                        @endphp
+                                        <li class="px-3 py-2 border-bottom border-light last-child-border-0">
+                                            <div class="d-flex align-items-center gap-2">
+                                                <div class="fw-semibold text-dark small">{{ $loop->iteration }}. {{ $santri->nama }}</div>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center mt-1">
+                                                <span class="x-small text-muted"><i class="bi bi-door-open me-1"></i>{{ $santri->kelas }}</span>
+                                                <span class="badge bg-danger bg-opacity-10 text-danger x-small">
+                                                    {{ implode(', ', $sholats) }}
+                                                </span>
+                                            </div>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        </div>
+                    @else
+                        <div class="text-center py-4 bg-light rounded-4">
+                            <i class="bi bi-check-circle fs-3 text-success d-block mb-2"></i>
+                            <p class="text-muted small mb-0">Alhamdulillah, tidak ada santri alfa hari ini.</p>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>

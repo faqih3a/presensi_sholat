@@ -67,10 +67,45 @@
                         </script>
 
                         <div class="col-md-6">
+                            <label class="form-label fw-semibold">Waktu Izin</label>
+                            <div class="premium-select-wrapper">
+                                <button class="premium-select-btn dropdown-toggle @error('waktu_sholat') is-invalid @enderror" type="button" id="waktuSholatDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <span id="selected-sholat-text">{{ old('waktu_sholat') ? (old('waktu_sholat') == 'Full Day' ? 'Full Day (Semua Waktu)' : old('waktu_sholat')) : 'Full Day (Semua Waktu)' }}</span>
+                                    <i class="bi bi-chevron-down small text-muted"></i>
+                                </button>
+                                <ul class="dropdown-menu shadow border-0" aria-labelledby="waktuSholatDropdown">
+                                    <li><a class="dropdown-item py-2 {{ !old('waktu_sholat') || old('waktu_sholat') == 'Full Day' ? 'active' : '' }}" href="javascript:void(0)" onclick="selectWaktuSholat('Full Day', 'Full Day (Semua Waktu)')">Full Day (Semua Waktu)</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item py-2 {{ old('waktu_sholat') == 'Subuh' ? 'active' : '' }}" href="javascript:void(0)" onclick="selectWaktuSholat('Subuh', 'Subuh')">Subuh</a></li>
+                                    <li><a class="dropdown-item py-2 {{ old('waktu_sholat') == 'Dzuhur' ? 'active' : '' }}" href="javascript:void(0)" onclick="selectWaktuSholat('Dzuhur', 'Dzuhur')">Dzuhur</a></li>
+                                    <li><a class="dropdown-item py-2 {{ old('waktu_sholat') == 'Ashar' ? 'active' : '' }}" href="javascript:void(0)" onclick="selectWaktuSholat('Ashar', 'Ashar')">Ashar</a></li>
+                                    <li><a class="dropdown-item py-2 {{ old('waktu_sholat') == 'Maghrib' ? 'active' : '' }}" href="javascript:void(0)" onclick="selectWaktuSholat('Maghrib', 'Maghrib')">Maghrib</a></li>
+                                    <li><a class="dropdown-item py-2 {{ old('waktu_sholat') == 'Isya' ? 'active' : '' }}" href="javascript:void(0)" onclick="selectWaktuSholat('Isya', 'Isya')">Isya</a></li>
+                                </ul>
+                                <input type="hidden" name="waktu_sholat" id="waktu_sholat_input" value="{{ old('waktu_sholat', 'Full Day') }}">
+                            </div>
+                            @error('waktu_sholat')
+                                <div class="invalid-feedback d-block">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="col-md-6" id="durasi_container">
+                            <label for="durasi_hari" class="form-label fw-semibold">Jumlah Hari</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0"><i class="bi bi-clock-history"></i></span>
+                                <input type="number" name="durasi_hari" id="durasi_hari" class="form-control border-start-0 @error('durasi_hari') is-invalid @enderror" value="{{ old('durasi_hari', 1) }}" min="1" oninput="calculateEndDate()">
+                                <span class="input-group-text bg-white border-start-0 text-muted">Hari</span>
+                            </div>
+                            @error('durasi_hari')
+                                <div class="invalid-feedback d-block">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="col-md-6">
                             <label for="tanggal_mulai" class="form-label fw-semibold">Tanggal Mulai</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light border-end-0"><i class="bi bi-calendar-event"></i></span>
-                                <input type="date" name="tanggal_mulai" id="tanggal_mulai" class="form-control border-start-0 @error('tanggal_mulai') is-invalid @enderror" value="{{ old('tanggal_mulai', date('Y-m-d')) }}" required>
+                                <input type="date" name="tanggal_mulai" id="tanggal_mulai" class="form-control border-start-0 @error('tanggal_mulai') is-invalid @enderror" value="{{ old('tanggal_mulai', date('Y-m-d')) }}" required onchange="calculateEndDate()">
                             </div>
                             @error('tanggal_mulai')
                                 <div class="invalid-feedback d-block">{{ $message }}</div>
@@ -81,12 +116,74 @@
                             <label for="tanggal_selesai" class="form-label fw-semibold">Tanggal Selesai</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light border-end-0"><i class="bi bi-calendar-check"></i></span>
-                                <input type="date" name="tanggal_selesai" id="tanggal_selesai" class="form-control border-start-0 @error('tanggal_selesai') is-invalid @enderror" value="{{ old('tanggal_selesai', date('Y-m-d')) }}" required>
+                                <input type="date" name="tanggal_selesai" id="tanggal_selesai" class="form-control border-start-0 @error('tanggal_selesai') is-invalid @enderror" value="{{ old('tanggal_selesai', date('Y-m-d')) }}" required readonly>
                             </div>
+                            <small class="text-muted mt-1 d-block"><i class="bi bi-info-circle me-1"></i> Otomatis terhitung dari jumlah hari</small>
                             @error('tanggal_selesai')
                                 <div class="invalid-feedback d-block">{{ $message }}</div>
                             @enderror
                         </div>
+
+                        <script>
+                            function selectJenisIzin(val, text) {
+                                document.getElementById('jenis_izin_input').value = val;
+                                document.getElementById('selected-jenis-text').innerText = text;
+                                
+                                const items = document.querySelectorAll('#jenisIzinDropdown + .dropdown-menu .dropdown-item');
+                                items.forEach(item => {
+                                    if (item.innerText === text) item.classList.add('active');
+                                    else item.classList.remove('active');
+                                });
+                            }
+
+                            function selectWaktuSholat(val, text) {
+                                document.getElementById('waktu_sholat_input').value = val;
+                                document.getElementById('selected-sholat-text').innerText = text;
+                                
+                                const items = document.querySelectorAll('#waktuSholatDropdown + .dropdown-menu .dropdown-item');
+                                items.forEach(item => {
+                                    if (item.innerText === text) item.classList.add('active');
+                                    else item.classList.remove('active');
+                                });
+
+                                // If not Full Day, set durasi to 1 and potentially hide/disable it
+                                if (val !== 'Full Day') {
+                                    document.getElementById('durasi_hari').value = 1;
+                                    document.getElementById('durasi_hari').readOnly = true;
+                                    document.getElementById('durasi_container').style.opacity = '0.7';
+                                } else {
+                                    document.getElementById('durasi_hari').readOnly = false;
+                                    document.getElementById('durasi_container').style.opacity = '1';
+                                }
+                                calculateEndDate();
+                            }
+
+                            function calculateEndDate() {
+                                const startDate = document.getElementById('tanggal_mulai').value;
+                                const duration = parseInt(document.getElementById('durasi_hari').value) || 1;
+                                
+                                if (startDate) {
+                                    const date = new Date(startDate);
+                                    date.setDate(date.getDate() + (duration - 1));
+                                    
+                                    const year = date.getFullYear();
+                                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                                    const day = String(date.getDate()).padStart(2, '0');
+                                    
+                                    document.getElementById('tanggal_selesai').value = `${year}-${month}-${day}`;
+                                }
+                            }
+
+                            // Initialize on load
+                            document.addEventListener('DOMContentLoaded', function() {
+                                calculateEndDate();
+                                const currentWaktu = document.getElementById('waktu_sholat_input').value;
+                                if (currentWaktu !== 'Full Day') {
+                                    document.getElementById('durasi_hari').readOnly = true;
+                                    document.getElementById('durasi_container').style.opacity = '0.7';
+                                }
+                            });
+                        </script>
 
                         <div class="col-md-12">
                             <label for="keterangan" class="form-label fw-semibold">Keterangan / Alasan</label>

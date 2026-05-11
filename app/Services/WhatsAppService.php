@@ -61,6 +61,9 @@ class WhatsAppService
         $msg .= "Ada pengajuan izin baru yang memerlukan konfirmasi:\n\n";
         $msg .= "👤 *Santri:* {$santriName}\n";
         $msg .= "📝 *Jenis:* {$jenisIzin}\n";
+        if ($izin->waktu_sholat && $izin->waktu_sholat !== 'Full Day') {
+            $msg .= "⏰ *Waktu:* {$izin->waktu_sholat}\n";
+        }
         $msg .= "📅 *Tanggal:* {$tanggal}\n";
         $msg .= "📄 *Keterangan:* {$keterangan}\n\n";
         $msg .= "Silakan login ke sistem untuk memproses:\n";

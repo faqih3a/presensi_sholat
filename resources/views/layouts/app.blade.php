@@ -175,9 +175,22 @@
         body.dark-mode .card { background-color: #1e1e1e; border-color: #333; }
         body.dark-mode .card-header { background-color: #1e1e1e; border-bottom-color: #333; }
         body.dark-mode .text-gray-800, body.dark-mode .text-dark, body.dark-mode .text-primary { color: #f8f9fa !important; }
-        body.dark-mode .table { color: #e0e0e0; border-color: #444; }
-        body.dark-mode .table-light { background-color: #2c2c2c; color: #fff; border-color: #444; }
-        body.dark-mode .table-hover tbody tr:hover { color: #fff; background-color: rgba(255,255,255,0.05); }
+        
+        /* Comprehensive Table Dark Mode */
+        body.dark-mode .table { color: #e9ecef !important; border-color: #333 !important; }
+        body.dark-mode .table :not(caption) > * > * { background-color: transparent !important; color: inherit !important; border-color: #333 !important; }
+        body.dark-mode .table thead th, body.dark-mode thead.bg-light, body.dark-mode .bg-light { background-color: #2c2c2c !important; color: #f8f9fa !important; border-color: #333 !important; }
+        body.dark-mode .table-striped tbody tr:nth-of-type(odd) { --bs-table-accent-bg: rgba(255, 255, 255, 0.03) !important; color: #e9ecef !important; }
+        body.dark-mode .table-hover tbody tr:hover { --bs-table-accent-bg: rgba(255, 255, 255, 0.07) !important; color: #fff !important; }
+        body.dark-mode .table-bordered, body.dark-mode .table-bordered td, body.dark-mode .table-bordered th { border-color: #333 !important; }
+        body.dark-mode .card-footer { background-color: #1e1e1e !important; border-top-color: #333 !important; color: #adb5bd !important; }
+        
+        /* Buttons & Utilites in Dark Mode */
+        body.dark-mode .btn-light, body.dark-mode .btn-white { background-color: #2c2c2c !important; border-color: #444 !important; color: #f8f9fa !important; }
+        body.dark-mode .btn-light:hover, body.dark-mode .btn-white:hover { background-color: #3d3d3d !important; color: #fff !important; }
+        body.dark-mode .bg-light { background-color: #2c2c2c !important; }
+        body.dark-mode .bg-white { background-color: #1e1e1e !important; }
+        
         body.dark-mode .dropdown-menu { background-color: #1e1e1e; border-color: #333; }
         body.dark-mode .dropdown-item { color: #e0e0e0; }
         body.dark-mode .dropdown-item:hover { background-color: #2c2c2c; color: #fff; }

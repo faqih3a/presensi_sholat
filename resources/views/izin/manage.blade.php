@@ -66,8 +66,11 @@
                                     <div class="small fw-medium">
                                         {{ $izin->tanggal_mulai->format('d/m/y') }} - {{ $izin->tanggal_selesai->format('d/m/y') }}
                                     </div>
-                                    <div class="x-small text-muted">
-                                        {{ $izin->tanggal_mulai->diffInDays($izin->tanggal_selesai) + 1 }} Hari
+                                    <div class="d-flex align-items-center x-small text-muted">
+                                        <span class="me-2">{{ $izin->tanggal_mulai->diffInDays($izin->tanggal_selesai) + 1 }} Hari</span>
+                                        @if($izin->waktu_sholat && $izin->waktu_sholat !== 'Full Day')
+                                            <span class="badge bg-secondary-subtle text-secondary py-0 px-1" style="font-size: 0.65rem;">{{ $izin->waktu_sholat }}</span>
+                                        @endif
                                     </div>
                                 </td>
                                 <td>
@@ -116,6 +119,9 @@
                                                         <div class="bg-light p-3 rounded-3 mb-4">
                                                             <div class="small text-muted mb-1 text-uppercase fw-bold">Detail Pengajuan</div>
                                                             <div class="fw-bold mb-1">{{ $izin->jenis_izin }} ({{ $izin->tanggal_mulai->format('d M') }} - {{ $izin->tanggal_selesai->format('d M Y') }})</div>
+                                                            @if($izin->waktu_sholat && $izin->waktu_sholat !== 'Full Day')
+                                                                <div class="badge bg-success text-white mb-2">{{ $izin->waktu_sholat }}</div>
+                                                            @endif
                                                             <div class="small text-muted">{{ $izin->keterangan }}</div>
                                                         </div>
 

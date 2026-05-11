@@ -9,6 +9,7 @@ class Izin extends Model
     protected $fillable = [
         'user_id',
         'jenis_izin',
+        'waktu_sholat',
         'tanggal_mulai',
         'tanggal_selesai',
         'keterangan',

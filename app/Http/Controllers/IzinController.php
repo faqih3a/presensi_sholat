@@ -23,13 +23,14 @@ class IzinController extends Controller
     {
         $request->validate([
             'jenis_izin' => 'required|in:Sakit,Izin,Kegiatan Luar',
+            'waktu_sholat' => 'nullable|string|in:Full Day,Subuh,Dzuhur,Ashar,Maghrib,Isya',
             'tanggal_mulai' => 'required|date',
             'tanggal_selesai' => 'required|date|after_or_equal:tanggal_mulai',
             'keterangan' => 'required|string',
             'lampiran' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
         ]);
 
-        $data = $request->all();
+        $data = $request->only(['jenis_izin', 'waktu_sholat', 'tanggal_mulai', 'tanggal_selesai', 'keterangan']);
         $data['user_id'] = auth()->id();
 
         if ($request->hasFile('lampiran')) {

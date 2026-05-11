@@ -55,11 +55,14 @@
                                     <div class="small fw-medium">
                                         {{ $izin->tanggal_mulai->format('d M Y') }} - {{ $izin->tanggal_selesai->format('d M Y') }}
                                     </div>
-                                    <div class="text-muted x-small">
+                                    <div class="d-flex align-items-center x-small text-muted">
                                         @php
                                             $diff = $izin->tanggal_mulai->diffInDays($izin->tanggal_selesai) + 1;
                                         @endphp
-                                        {{ $diff }} Hari
+                                        <span class="me-2">{{ $diff }} Hari</span>
+                                        @if($izin->waktu_sholat && $izin->waktu_sholat !== 'Full Day')
+                                            <span class="badge bg-secondary-subtle text-secondary py-0 px-1" style="font-size: 0.65rem;">{{ $izin->waktu_sholat }}</span>
+                                        @endif
                                     </div>
                                 </td>
                                 <td>
@@ -101,13 +104,17 @@
                                                         <p class="mb-0 fw-semibold fs-5">{{ $izin->jenis_izin }}</p>
                                                     </div>
                                                     <div class="row mb-4">
-                                                        <div class="col-6">
-                                                            <label class="text-muted small text-uppercase fw-bold mb-1 d-block">Mulai</label>
-                                                            <p class="mb-0 fw-medium">{{ $izin->tanggal_mulai->format('l, d M Y') }}</p>
+                                                        <div class="col-4">
+                                                            <label class="text-muted small text-uppercase fw-bold mb-1 d-block">Waktu</label>
+                                                            <p class="mb-0 fw-medium text-success">{{ $izin->waktu_sholat ?? 'Full Day' }}</p>
                                                         </div>
-                                                        <div class="col-6">
+                                                        <div class="col-4">
+                                                            <label class="text-muted small text-uppercase fw-bold mb-1 d-block">Mulai</label>
+                                                            <p class="mb-0 fw-medium">{{ $izin->tanggal_mulai->format('d M Y') }}</p>
+                                                        </div>
+                                                        <div class="col-4">
                                                             <label class="text-muted small text-uppercase fw-bold mb-1 d-block">Selesai</label>
-                                                            <p class="mb-0 fw-medium">{{ $izin->tanggal_selesai->format('l, d M Y') }}</p>
+                                                            <p class="mb-0 fw-medium">{{ $izin->tanggal_selesai->format('d M Y') }}</p>
                                                         </div>
                                                     </div>
                                                     <div class="mb-4">
