@@ -135,6 +135,10 @@ class DashboardController extends Controller
         $search = $request->get('search');
 
         if ($period === 'today') {
+            $now = \Carbon\Carbon::now('Asia/Jakarta');
+            $jadwal = $this->getJadwalSholat($now);
+            $times = $jadwal ? $this->getPrayerEndTimes($tanggal, $jadwal) : [];
+
             $santriQuery = Santri::orderBy('nama', 'asc');
             if ($search) {
                 $santriQuery->where('nama', 'like', '%' . $search . '%');
@@ -168,6 +172,13 @@ class DashboardController extends Controller
                         $virtualStatus = $hasIzin ? 'Izin' : 'Alfa';
                         
                         if (!$status || $status === $virtualStatus) {
+                            // Check if time has passed for this prayer (only for today)
+                            if ($tanggal === $now->format('Y-m-d') && $jadwal && isset($times[$s])) {
+                                if ($now->lessThan($times[$s])) {
+                                    continue; // Skip if it's not yet time to be Alfa
+                                }
+                            }
+
                             $allPresensis->push((object) [
                                 'santri' => $santri,
                                 'santri_id' => $santri->id,
@@ -181,6 +192,7 @@ class DashboardController extends Controller
                 }
             }
             $presensis = $status ? $allPresensis->filter(fn($p) => $p->status === $status) : $allPresensis;
+            $presensis = $presensis->sortByDesc('waktu_hadir');
 
         } else {
             // week/month logic
@@ -208,6 +220,10 @@ class DashboardController extends Controller
             $realRecords = $query->get();
             $realRecordsGrouped = $realRecords->where('tanggal', $today)->groupBy(['santri_id', 'waktu_sholat']);
 
+            $now = \Carbon\Carbon::now('Asia/Jakarta');
+            $jadwal = $this->getJadwalSholat($now);
+            $times = $jadwal ? $this->getPrayerEndTimes($today, $jadwal) : [];
+
             // Synthesize missing records for TODAY only within the week/month view
             $synthesizedToday = collect();
             $sholats = ['Subuh', 'Dzuhur', 'Ashar', 'Maghrib', 'Isya'];
@@ -228,6 +244,13 @@ class DashboardController extends Controller
 
                         $virtualStatus = $hasIzin ? 'Izin' : 'Alfa';
                         if (!$status || $status === $virtualStatus) {
+                            // Check if time has passed for this prayer (only for today)
+                            if ($jadwal && isset($times[$s])) {
+                                if ($now->lessThan($times[$s])) {
+                                    continue; // Skip if it's not yet time to be Alfa
+                                }
+                            }
+
                             $synthesizedToday->push((object) [
                                 'santri' => $santri,
                                 'santri_id' => $santri->id,
@@ -258,6 +281,10 @@ class DashboardController extends Controller
         $search = $request->get('search');
 
         if ($period === 'today') {
+            $now = \Carbon\Carbon::now('Asia/Jakarta');
+            $jadwal = $this->getJadwalSholat($now);
+            $times = $jadwal ? $this->getPrayerEndTimes($tanggal, $jadwal) : [];
+
             $santriQuery = \App\Models\Santri::orderBy('nama', 'asc');
             if ($search) {
                 $santriQuery->where('nama', 'like', '%' . $search . '%');
@@ -291,6 +318,13 @@ class DashboardController extends Controller
                         $virtualStatus = $hasIzin ? 'Izin' : 'Alfa';
                         
                         if (!$status || $status === $virtualStatus) {
+                            // Check if time has passed for this prayer (only for today)
+                            if ($tanggal === $now->format('Y-m-d') && $jadwal && isset($times[$s])) {
+                                if ($now->lessThan($times[$s])) {
+                                    continue; // Skip if it's not yet time to be Alfa
+                                }
+                            }
+
                             $allPresensis->push((object) [
                                 'santri' => $santri,
                                 'santri_id' => $santri->id,
@@ -305,6 +339,7 @@ class DashboardController extends Controller
             }
             
             $presensis = $status ? $allPresensis->filter(fn($p) => $p->status === $status) : $allPresensis;
+            $presensis = $presensis->sortByDesc('waktu_hadir');
 
         } else {
             $query = Presensi::with('santri');
@@ -427,23 +462,7 @@ class DashboardController extends Controller
 
         // Tentukan batas waktu sholat (misal: sholat dianggap selesai saat waktu sholat berikutnya tiba)
         // Kecuali Isya yang kita beri batas misal jam 23:59 atau Fajr besok.
-        $sholats = [
-            'Subuh' => $jadwal['Fajr'],
-            'Dzuhur' => $jadwal['Dhuhr'],
-            'Ashar' => $jadwal['Asr'],
-            'Maghrib' => $jadwal['Maghrib'],
-            'Isya' => $jadwal['Isha']
-        ];
-
-        // Tambahkan buffer waktu (misal 30 menit setelah waktu sholat masuk baru dianggap Alfa jika tidak hadir)
-        // Atau lebih tepatnya, Alfa dicatat jika sudah masuk waktu sholat berikutnya.
-        $times = [
-            'Subuh' => \Carbon\Carbon::parse($today . ' ' . $jadwal['Dhuhr'], 'Asia/Jakarta'),
-            'Dzuhur' => \Carbon\Carbon::parse($today . ' ' . $jadwal['Asr'], 'Asia/Jakarta'),
-            'Ashar' => \Carbon\Carbon::parse($today . ' ' . $jadwal['Maghrib'], 'Asia/Jakarta'),
-            'Maghrib' => \Carbon\Carbon::parse($today . ' ' . $jadwal['Isha'], 'Asia/Jakarta'),
-            'Isya' => \Carbon\Carbon::parse($today . ' 23:59:59', 'Asia/Jakarta'), // Batas akhir hari
-        ];
+        $times = $this->getPrayerEndTimes($today, $jadwal);
 
         $santris = \App\Models\Santri::all();
 
@@ -535,5 +554,16 @@ class DashboardController extends Controller
             
             return null;
         });
+    }
+
+    private function getPrayerEndTimes($date, $jadwal)
+    {
+        return [
+            'Subuh' => \Carbon\Carbon::parse($date . ' ' . $jadwal['Dhuhr'], 'Asia/Jakarta'),
+            'Dzuhur' => \Carbon\Carbon::parse($date . ' ' . $jadwal['Asr'], 'Asia/Jakarta'),
+            'Ashar' => \Carbon\Carbon::parse($date . ' ' . $jadwal['Maghrib'], 'Asia/Jakarta'),
+            'Maghrib' => \Carbon\Carbon::parse($date . ' ' . $jadwal['Isha'], 'Asia/Jakarta'),
+            'Isya' => \Carbon\Carbon::parse($date . ' 23:59:59', 'Asia/Jakarta'),
+        ];
     }
 }

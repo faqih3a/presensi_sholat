@@ -31,6 +31,8 @@ Route::middleware(['auth'])->group(function () {
     // Attendance scanning
     Route::get('/scan', [PresensiController::class, 'index'])->name('presensi.scan');
     Route::post('/presensi', [PresensiController::class, 'store'])->name('presensi.store');
+    Route::put('/presensi/update-status', [PresensiController::class, 'updateStatus'])->name('presensi.update-status');
+    Route::delete('/presensi/{presensi}', [PresensiController::class, 'destroy'])->name('presensi.destroy');
     
     // API-like route to get all santris for face matching
     Route::get('/api/santris', [SantriController::class, 'index'])->name('api.santris');
