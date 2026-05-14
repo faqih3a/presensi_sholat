@@ -107,12 +107,15 @@
         <h1 class="h3 mb-0 text-dark fw-bold">Rekap Kehadiran Sholat</h1>
         <p class="text-muted mb-0">Pantau detail kehadiran sholat berjamaah santri secara keseluruhan.</p>
     </div>
-    <form action="{{ route('dashboard.kehadiran') }}" method="GET" class="no-loader">
+    <form action="{{ route('dashboard.kehadiran') }}" method="GET" class="no-loader d-flex flex-wrap gap-2 align-items-center">
         <input type="hidden" name="waktu_sholat" value="{{ request('waktu_sholat') }}">
-        <div class="bg-white p-1 rounded-3 shadow-sm d-flex border">
-            <button type="submit" name="period" value="today" class="btn btn-sm px-3 {{ $period == 'today' ? 'btn-success shadow-sm' : 'btn-link text-muted text-decoration-none' }} rounded-2 transition-all">Hari Ini</button>
-            <button type="submit" name="period" value="week" class="btn btn-sm px-3 {{ $period == 'week' ? 'btn-success shadow-sm' : 'btn-link text-muted text-decoration-none' }} rounded-2 transition-all">Minggu Ini</button>
-            <button type="submit" name="period" value="month" class="btn btn-sm px-3 {{ $period == 'month' ? 'btn-success shadow-sm' : 'btn-link text-muted text-decoration-none' }} rounded-2 transition-all">Bulan Ini</button>
+        <div class="bg-white p-1 rounded-3 shadow-sm d-flex border align-items-center px-2">
+            <span class="small fw-bold text-muted me-2">DARI:</span>
+            <input type="date" name="tanggal_mulai" value="{{ $tanggal_mulai }}" class="form-control form-control-sm border-0 p-0 shadow-none fw-bold text-success" style="width: 130px; font-size: 0.8rem;" onchange="this.form.submit()">
+        </div>
+        <div class="bg-white p-1 rounded-3 shadow-sm d-flex border align-items-center px-2">
+            <span class="small fw-bold text-muted me-2">SAMPAI:</span>
+            <input type="date" name="tanggal_akhir" value="{{ $tanggal_akhir }}" class="form-control form-control-sm border-0 p-0 shadow-none fw-bold text-success" style="width: 130px; font-size: 0.8rem;" onchange="this.form.submit()">
         </div>
     </form>
 </div>
@@ -122,7 +125,8 @@
         <h6 class="m-0 fw-bold text-dark"><i class="bi bi-table text-success me-2"></i>Data Rekap Kehadiran</h6>
         <div class="d-flex flex-column flex-md-row gap-3 align-items-md-center">
             <form id="filterForm" action="{{ route('dashboard.kehadiran') }}" method="GET" class="d-flex flex-wrap align-items-center gap-3 m-0 no-loader">
-                <input type="hidden" name="period" value="{{ $period }}">
+                <input type="hidden" name="tanggal_mulai" value="{{ $tanggal_mulai }}">
+                <input type="hidden" name="tanggal_akhir" value="{{ $tanggal_akhir }}">
                 <input type="hidden" name="waktu_sholat" id="hidden_waktu_sholat" value="{{ request('waktu_sholat') }}">
                 <input type="hidden" name="status" id="hidden_status" value="{{ request('status') }}">
                 
@@ -232,21 +236,15 @@
                                 <button type="button" class="btn btn-sm btn-white border px-2 py-1 rounded-2 shadow-sm" title="Edit Status" onclick="editStatus('{{ $presensi->santri_id }}', '{{ $presensi->tanggal }}', '{{ $presensi->waktu_sholat }}', '{{ $presensi->status }}')">
                                     <i class="bi bi-pencil-square text-primary"></i>
                                 </button>
-                                @if(isset($presensi->id))
-                                <form action="{{ route('presensi.destroy', $presensi->id) }}" method="POST" class="m-0" onsubmit="return confirm('Hapus data presensi ini?')">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-white border px-2 py-1 rounded-2 shadow-sm" title="Hapus">
-                                        <i class="bi bi-trash text-danger"></i>
-                                    </button>
-                                </form>
-                                @endif
+                                <button type="button" class="btn btn-sm btn-white border px-2 py-1 rounded-2 shadow-sm" title="Hapus" onclick="deletePresensi('{{ $presensi->santri_id }}', '{{ $presensi->tanggal }}', '{{ $presensi->waktu_sholat }}')">
+                                    <i class="bi bi-trash text-danger"></i>
+                                </button>
                             </div>
                         </td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="5" class="text-center py-5">
+                        <td colspan="6" class="text-center py-5">
                             <div class="py-4 text-muted">
                                 <i class="bi bi-inbox fs-1 d-block mb-3 opacity-50"></i>
                                 <h6 class="fw-bold">Belum Ada Data Presensi</h6>
@@ -268,54 +266,4 @@
     @endif
 </div>
 
-<!-- Modal Edit Status -->
-<div class="modal fade" id="editStatusModal" tabindex="-1" aria-labelledby="editStatusModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow">
-            <div class="modal-header bg-white border-bottom py-3">
-                <h6 class="modal-title fw-bold text-dark" id="editStatusModalLabel">Edit Status Kehadiran</h6>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form action="{{ route('presensi.update-status') }}" method="POST">
-                @csrf
-                @method('PUT')
-                <input type="hidden" name="santri_id" id="edit_santri_id">
-                <input type="hidden" name="tanggal" id="edit_tanggal">
-                <input type="hidden" name="waktu_sholat" id="edit_waktu_sholat">
-                
-                <div class="modal-body p-4">
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold text-muted">Status Kehadiran</label>
-                        <select name="status" id="edit_status" class="form-select border-light bg-light rounded-3">
-                            <option value="Hadir">Hadir</option>
-                            <option value="Izin">Izin</option>
-                            <option value="Alfa">Alpha</option>
-                        </select>
-                        <div class="form-text small mt-2">
-                            Mengubah status menjadi <strong>Hadir</strong> akan mencatat waktu kehadiran saat ini.
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer bg-light border-0 py-3">
-                    <button type="button" class="btn btn-white btn-sm px-4" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-success btn-sm px-4 fw-bold">Simpan Perubahan</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-@push('scripts')
-<script>
-    function editStatus(santriId, tanggal, waktuSholat, currentStatus) {
-        document.getElementById('edit_santri_id').value = santriId;
-        document.getElementById('edit_tanggal').value = tanggal;
-        document.getElementById('edit_waktu_sholat').value = waktuSholat;
-        document.getElementById('edit_status').value = currentStatus;
-        
-        var editModal = new bootstrap.Modal(document.getElementById('editStatusModal'));
-        editModal.show();
-    }
-</script>
-@endpush
 @endsection

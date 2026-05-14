@@ -5,11 +5,21 @@
 @section('content')
 <div class="row">
     <div class="col-md-12">
-        <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
             <div>
                 <h4 class="fw-bold mb-0">Kelola Izin / Sakit</h4>
                 <p class="text-muted mb-0">Tinjau dan proses pengajuan izin dari santri</p>
             </div>
+            <form action="{{ route('izin.manage') }}" method="GET" class="no-loader d-flex flex-wrap gap-2 align-items-center">
+                <div class="bg-white p-1 rounded-3 shadow-sm d-flex border align-items-center px-2">
+                    <span class="small fw-bold text-muted me-2">DARI:</span>
+                    <input type="date" name="tanggal_mulai" value="{{ $tanggal_mulai }}" class="form-control form-control-sm border-0 p-0 shadow-none fw-bold text-success" style="width: 130px; font-size: 0.8rem;" onchange="this.form.submit()">
+                </div>
+                <div class="bg-white p-1 rounded-3 shadow-sm d-flex border align-items-center px-2">
+                    <span class="small fw-bold text-muted me-2">SAMPAI:</span>
+                    <input type="date" name="tanggal_akhir" value="{{ $tanggal_akhir }}" class="form-control form-control-sm border-0 p-0 shadow-none fw-bold text-success" style="width: 130px; font-size: 0.8rem;" onchange="this.form.submit()">
+                </div>
+            </form>
         </div>
 
         @if(session('success'))

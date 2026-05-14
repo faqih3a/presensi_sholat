@@ -59,15 +59,30 @@ class IzinController extends Controller
         return redirect()->route('izin.index')->with('success', 'Permohonan izin berhasil diajukan.');
     }
 
-    public function manage()
+    public function manage(Request $request)
     {
         // Only for Asatidz
         if (auth()->user()->role !== 'asatidz') {
             abort(403);
         }
 
-        $izins = Izin::with('user.santri')->latest()->get();
-        return view('izin.manage', compact('izins'));
+        $today = \Carbon\Carbon::now('Asia/Jakarta')->format('Y-m-d');
+        $tanggal_mulai = $request->get('tanggal_mulai', $today);
+        $tanggal_akhir = $request->get('tanggal_akhir', $today);
+
+        $izins = Izin::with('user.santri')
+                    ->where(function($query) use ($tanggal_mulai, $tanggal_akhir) {
+                        $query->whereBetween('tanggal_mulai', [$tanggal_mulai, $tanggal_akhir])
+                              ->orWhereBetween('tanggal_selesai', [$tanggal_mulai, $tanggal_akhir])
+                              ->orWhere(function($q) use ($tanggal_mulai, $tanggal_akhir) {
+                                  $q->where('tanggal_mulai', '<=', $tanggal_mulai)
+                                    ->where('tanggal_selesai', '>=', $tanggal_akhir);
+                              });
+                    })
+                    ->latest()
+                    ->get();
+
+        return view('izin.manage', compact('izins', 'tanggal_mulai', 'tanggal_akhir'));
     }
 
     public function updateStatus(Request $request, Izin $izin)

@@ -150,20 +150,41 @@ class PresensiController extends Controller
         return redirect()->back()->with('success', 'Data kehadiran berhasil dihapus.');
     }
 
+    public function deleteByParams(Request $request)
+    {
+        $request->validate([
+            'santri_id' => 'required|exists:santris,id',
+            'tanggal' => 'required|date',
+            'waktu_sholat' => 'required|string',
+        ]);
+
+        Presensi::where('santri_id', $request->santri_id)
+                ->where('tanggal', $request->tanggal)
+                ->where('waktu_sholat', $request->waktu_sholat)
+                ->delete();
+
+        return redirect()->back()->with('success', 'Data kehadiran berhasil dihapus.');
+    }
+    
     private function getJadwalSholat(Carbon $date)
     {
-        $cacheKey = 'jadwal_sholat_' . $date->format('Y-m-d');
+        $address = 'Bogor, Kecamatan Cibeureum, Kp Joglo, Indonesia';
+        $cacheKey = 'jadwal_sholat_' . md5($address) . '_' . $date->format('Y-m-d');
 
-        return \Illuminate\Support\Facades\Cache::remember($cacheKey, 86400, function () use ($date) {
+        return \Illuminate\Support\Facades\Cache::remember($cacheKey, 86400, function () use ($date, $address) {
             try {
                 $response = \Illuminate\Support\Facades\Http::timeout(5)->get('https://api.aladhan.com/v1/timingsByAddress', [
-                    'address' => 'Malang, Indonesia',
+                    'address' => $address,
                     'method' => 20, // Kemenag RI
                     'date' => $date->format('d-m-Y')
                 ]);
 
                 if ($response->successful()) {
-                    return $response->json('data.timings');
+                    $timings = $response->json('data.timings');
+                    foreach ($timings as $key => $time) {
+                        $timings[$key] = substr($time, 0, 5);
+                    }
+                    return $timings;
                 }
             } catch (\Exception $e) {
                 // Log error if needed
@@ -181,10 +202,20 @@ class PresensiController extends Controller
         $maghrib = $jadwal['Maghrib'] ?? '17:30';
         $isha = $jadwal['Isha'] ?? '18:45';
 
-        // Helper untuk mengurangi 30 menit dari string HH:mm
+        // Start time is 30 minutes before the prayer
         $getStart = function($timeStr) {
             try {
                 return Carbon::createFromFormat('H:i', $timeStr)->subMinutes(30)->format('H:i');
+            } catch (\Exception $e) {
+                return $timeStr;
+            }
+        };
+
+        // End time as per user request: Maghrib 10 mins, others 15 mins after entry
+        $getEnd = function($timeStr, $sholatName) {
+            try {
+                $minutes = ($sholatName === 'Maghrib') ? 10 : 15;
+                return Carbon::createFromFormat('H:i', $timeStr)->addMinutes($minutes)->format('H:i');
             } catch (\Exception $e) {
                 return $timeStr;
             }
@@ -196,20 +227,24 @@ class PresensiController extends Controller
         $maghribStart = $getStart($maghrib);
         $ishaStart = $getStart($isha);
 
-        // Logika rentang waktu: Mulai 30 menit sebelum waktu sholat masuk
-        // hingga waktu sholat berikutnya tiba.
+        $fajrEnd = $getEnd($fajr, 'Subuh');
+        $dhuhrEnd = $getEnd($dhuhr, 'Dzuhur');
+        $asrEnd = $getEnd($asr, 'Ashar');
+        $maghribEnd = $getEnd($maghrib, 'Maghrib');
+        $ishaEnd = $getEnd($isha, 'Isya');
+
         switch ($sholat) {
             case 'Subuh':
-                return $currentTime >= $fajrStart && $currentTime < $dhuhr;
+                return $currentTime >= $fajrStart && $currentTime <= $fajrEnd;
             case 'Dzuhur':
-                return $currentTime >= $dhuhrStart && $currentTime < $asr;
+                return $currentTime >= $dhuhrStart && $currentTime <= $dhuhrEnd;
             case 'Ashar':
-                return $currentTime >= $asrStart && $currentTime < $maghrib;
+                return $currentTime >= $asrStart && $currentTime <= $asrEnd;
             case 'Maghrib':
-                return $currentTime >= $maghribStart && $currentTime < $isha;
+                return $currentTime >= $maghribStart && $currentTime <= $maghribEnd;
             case 'Isya':
-                // Isya berlaku mulai 30 menit sebelum Isya hingga 30 menit sebelum Subuh hari berikutnya
-                return $currentTime >= $ishaStart || $currentTime < $fajrStart;
+                // For Isya, handle cross-day if necessary, but usually just +15 mins
+                return $currentTime >= $ishaStart && $currentTime <= $ishaEnd;
         }
 
         return false;

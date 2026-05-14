@@ -637,6 +637,7 @@
             }
         });
     </script>
+    @include('partials.presensi-actions-modal')
     @stack('scripts')
 </body>
 </html>
