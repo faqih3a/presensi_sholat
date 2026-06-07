@@ -229,6 +229,15 @@
                             <input type="file" name="avatar" id="avatarInput" class="d-none" accept="image/*">
                             @if($user->role === 'santri')
                                 <input type="hidden" name="face_descriptor" id="faceDescriptorInput">
+                                @error('face_descriptor')
+                                    <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm mb-4" role="alert" style="border-radius: 0.75rem;">
+                                        <div class="d-flex align-items-center">
+                                            <i class="bi bi-exclamation-triangle-fill me-2 fs-5"></i>
+                                            <div class="fw-semibold small">{{ $message }}</div>
+                                        </div>
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                    </div>
+                                @enderror
                             @endif
                             
                             <div class="row g-4">

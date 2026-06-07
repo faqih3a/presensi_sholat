@@ -23,7 +23,7 @@ class SantriController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:5',
             'foto_referensi' => 'required|image|mimes:jpeg,png,jpg|max:2048',
-            'face_descriptor' => 'required|string',
+            'face_descriptor' => ['required', 'string', new \App\Rules\UniqueFace],
         ]);
 
         $imagePath = $request->file('foto_referensi')->store('santri_fotos', 'public');
@@ -75,6 +75,7 @@ class SantriController extends Controller
             'nama' => 'required|string|max:255',
             'kelas' => 'required|string|max:50',
             'foto_referensi' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'face_descriptor' => ['nullable', 'string', new \App\Rules\UniqueFace($santri->id)],
         ]);
 
         $data = [

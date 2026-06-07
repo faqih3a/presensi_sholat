@@ -39,7 +39,7 @@ class ProfileController extends Controller
             
             if ($user->role === 'santri') {
                 $request->validate([
-                    'face_descriptor' => 'required|string',
+                    'face_descriptor' => ['required', 'string', new \App\Rules\UniqueFace($user->santri?->id)],
                 ], [
                     'face_descriptor.required' => 'Wajah pada foto tidak terdeteksi atau sistem sedang memproses.',
                 ]);

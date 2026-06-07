@@ -23,18 +23,17 @@ class ProfileUpdateTest extends TestCase
             'email' => 'santri_test@thursina.id',
         ]);
 
-        // Create the associated santri
         $santri = Santri::create([
             'user_id' => $user->id,
             'nama' => $user->name,
             'kelas' => '10 MA',
             'foto_referensi' => 'old_photo.jpg',
-            'face_descriptor' => '[0.1, 0.2, 0.3]',
+            'face_descriptor' => json_encode(array_fill(0, 128, 0.1)),
         ]);
 
         // Mock upload file
         $file = UploadedFile::fake()->create('new_avatar.jpg', 100, 'image/jpeg');
-        $faceDescriptor = '[0.9, 0.8, 0.7]';
+        $faceDescriptor = json_encode(array_fill(0, 128, 0.9));
 
         $response = $this->actingAs($user)->put(route('profile.update'), [
             'name' => 'Updated Santri Name',
@@ -72,7 +71,7 @@ class ProfileUpdateTest extends TestCase
             'nama' => $user->name,
             'kelas' => '10 MA',
             'foto_referensi' => 'old_photo.jpg',
-            'face_descriptor' => '[0.1, 0.2, 0.3]',
+            'face_descriptor' => json_encode(array_fill(0, 128, 0.1)),
         ]);
 
         $file = UploadedFile::fake()->create('new_avatar.jpg', 100, 'image/jpeg');
@@ -111,4 +110,45 @@ class ProfileUpdateTest extends TestCase
         $this->assertNotNull($user->avatar);
         Storage::disk('public')->assertExists('avatars/' . $user->avatar);
     }
+
+    public function test_duplicate_face_descriptor_is_rejected()
+    {
+        Storage::fake('public');
+
+        // Create first user (existing)
+        $existingUser = User::factory()->create(['role' => 'santri']);
+        $existingDescriptor = array_fill(0, 128, 0.1);
+        Santri::create([
+            'user_id' => $existingUser->id,
+            'nama' => 'Existing Santri',
+            'kelas' => '10 MA',
+            'foto_referensi' => 'existing.jpg',
+            'face_descriptor' => json_encode($existingDescriptor),
+        ]);
+
+        // Create second user (trying to register/update with same face)
+        $newUser = User::factory()->create(['role' => 'santri']);
+        $santri = Santri::create([
+            'user_id' => $newUser->id,
+            'nama' => 'New Santri',
+            'kelas' => '10 MA',
+            'foto_referensi' => 'new.jpg',
+            'face_descriptor' => json_encode(array_fill(0, 128, 0.5)), // different initially
+        ]);
+
+        // Try to update new user's profile with a face descriptor close to the existing user's face (duplicate)
+        $file = UploadedFile::fake()->create('duplicate_avatar.jpg', 100, 'image/jpeg');
+        $duplicateDescriptor = array_fill(0, 128, 0.12); // very close to 0.1, Euclidean distance is ~0.226 (under 0.45 threshold)
+
+        $response = $this->actingAs($newUser)->put(route('profile.update'), [
+            'name' => 'New Santri',
+            'email' => $newUser->email,
+            'kelas' => '10 MA',
+            'avatar' => $file,
+            'face_descriptor' => json_encode($duplicateDescriptor),
+        ]);
+
+        $response->assertSessionHasErrors(['face_descriptor']);
+    }
 }
+
