@@ -52,12 +52,13 @@
             display: flex;
             align-items: center;
             gap: 1rem;
-            transition: background-color 0.2s, color 0.2s, padding 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: background-color 0.2s, color 0.2s, padding 0.4s cubic-bezier(0.4, 0, 0.2, 1), width 0.4s cubic-bezier(0.4, 0, 0.2, 1), height 0.4s cubic-bezier(0.4, 0, 0.2, 1), margin 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             border-radius: 0.5rem;
             margin-bottom: 0.25rem;
             font-weight: 500;
             font-size: 0.9rem;
             white-space: nowrap;
+            width: 100%;
         }
         #sidebar-wrapper .sidebar-text {
             transition: opacity 0.2s ease-in-out;
@@ -115,13 +116,19 @@
             }
             body.sb-mini #sidebar-wrapper .list-group-item { 
                 justify-content: center; 
-                padding: 0.8rem 0;
-                margin: 0.4rem 0.8rem;
-                min-height: 50px;
+                padding: 0;
+                margin: 0.3rem auto;
+                width: 48px;
+                height: 48px;
+                min-height: 48px;
+                display: flex;
+                align-items: center;
+                gap: 0 !important;
             }
             body.sb-mini #sidebar-wrapper .list-group-item i { 
                 margin: 0; 
                 font-size: 1.3rem;
+                width: auto;
             }
             body.sb-mini #sidebar-wrapper .list-group-item.active {
                 background: linear-gradient(310deg, #198754 0%, #2dc57b 100%);

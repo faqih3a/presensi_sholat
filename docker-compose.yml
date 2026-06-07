@@ -1,0 +1,39 @@
+
+services:
+  # 1. Database
+  db:
+    image: mariadb:10.5
+    restart: always
+    environment:
+      MARIADB_ROOT_PASSWORD: Thurs1n@
+      MARIADB_DATABASE: db_presensi
+    volumes:
+      - ./db_data:/var/lib/mysql
+
+  # 2. PHP-FPM App
+  php:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/var/www
+    restart: always
+
+  # 3. Caddy Web Server (Port 80 & 443 for Auto-SSL)
+  caddy:
+    image: caddy:latest
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - .:/var/www
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - php
+
+volumes:
+  caddy_data:
+  caddy_config:
