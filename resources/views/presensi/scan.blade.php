@@ -266,6 +266,7 @@
     const toastBody = document.getElementById('toast-body-content');
     const bsToast = new bootstrap.Toast(toastEl, { delay: 4000 });
     
+    const jadwalInfo = @json($jadwalInfo ?? []);
     let faceMatcher = null;
     let labeledFaceDescriptors = [];
     const cooldowns = new Map(); // Untuk mencegah spam request
@@ -302,6 +303,39 @@
     }
 
     btnMulai.addEventListener('click', () => {
+        // Cek apakah waktu sholat valid berdasarkan jadwalInfo
+        if (jadwalInfo && jadwalInfo[selectedWaktuSholat]) {
+            const windowTimes = jadwalInfo[selectedWaktuSholat];
+            
+            // Dapatkan waktu saat ini di Asia/Jakarta
+            const formatter = new Intl.DateTimeFormat('en-US', {
+                timeZone: 'Asia/Jakarta',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            });
+            const timeParts = formatter.formatToParts(new Date());
+            const hour = timeParts.find(p => p.type === 'hour').value;
+            const minute = timeParts.find(p => p.type === 'minute').value;
+            
+            const currentMin = parseInt(hour, 10) * 60 + parseInt(minute, 10);
+            
+            const [startH, startM] = windowTimes.start.split(':').map(Number);
+            const startMin = startH * 60 + startM;
+            
+            const [endH, endM] = windowTimes.end.split(':').map(Number);
+            const endMin = endH * 60 + endM;
+            
+            if (currentMin < startMin || currentMin > endMin) {
+                showNotification(
+                    'Presensi Belum Dibuka / Sudah Ditutup',
+                    `Presensi sholat ${selectedWaktuSholat} hanya diperbolehkan dari pukul ${windowTimes.start} sampai ${windowTimes.end}.`,
+                    'danger'
+                );
+                return; // Batalkan dan jangan aktifkan kamera
+            }
+        }
+
         sholatSelector.classList.add('d-none');
         cameraArea.classList.remove('d-none');
         selectedBadge.textContent = `Sholat: ${selectedWaktuSholat}`;
@@ -345,7 +379,7 @@
             // 1. Load Models
             statusDesc.textContent = 'Memuat AI Models...';
             await Promise.all([
-                faceapi.nets.ssdMobilenetv1.loadFromUri('/models'),
+                faceapi.nets.tinyFaceDetector.loadFromUri('/models'),
                 faceapi.nets.faceLandmark68Net.loadFromUri('/models'),
                 faceapi.nets.faceRecognitionNet.loadFromUri('/models')
             ]);
@@ -485,7 +519,7 @@
         scanInterval = setInterval(async () => {
             if(!faceMatcher) return;
 
-            const detection = await faceapi.detectSingleFace(video).withFaceLandmarks().withFaceDescriptor();
+            const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 })).withFaceLandmarks().withFaceDescriptor();
             
             canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
             

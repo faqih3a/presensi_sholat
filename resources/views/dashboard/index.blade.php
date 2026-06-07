@@ -4,6 +4,18 @@
 
 @push('styles')
 <style>
+    .no-caret::after {
+        display: none !important;
+    }
+    .btn-white {
+        background-color: #fff;
+        color: #67748e;
+        border-color: #edf2f9;
+    }
+    .btn-white:hover {
+        background-color: #f8f9fa;
+        color: #198754;
+    }
     .card-stats {
         border: 1px solid #edf2f9;
         border-radius: 1rem;
@@ -81,28 +93,93 @@
 @endpush
 
 @section('content')
+@php
+    $currentPeriod = request('period', 'day');
+    $startDate = \Carbon\Carbon::parse($tanggal_mulai);
+    $endDate = \Carbon\Carbon::parse($tanggal_akhir);
+    
+    $startDate->locale('id');
+    $endDate->locale('id');
+    
+    // Always show Month and Year
+    $dateLabel = $startDate->translatedFormat('F Y');
+    
+    $currentYear = $startDate->year;
+    $currentMonth = $startDate->month;
+@endphp
+
 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
     <div>
         <h1 class="h3 mb-0 text-dark fw-bold">Dashboard</h1>
         <p class="text-muted mb-0">Selamat datang di sistem presensi sholat</p>
     </div>
-    <form action="{{ route('dashboard') }}" method="GET" class="no-loader d-flex flex-wrap gap-2 align-items-center">
-        <input type="hidden" name="waktu_sholat" value="{{ $waktuSholat }}">
-        <div class="bg-white p-1 rounded-3 shadow-sm d-flex border align-items-center px-2">
-            <span class="small fw-bold text-muted me-2">DARI:</span>
-            <input type="date" name="tanggal_mulai" value="{{ $tanggal_mulai }}" class="form-control form-control-sm border-0 p-0 shadow-none fw-bold text-success" style="width: 130px; font-size: 0.8rem;" onchange="this.form.submit()">
+    
+    <div class="d-flex flex-wrap gap-2 align-items-center justify-content-md-end">
+        <!-- Period Selection Tab -->
+        <div class="btn-group bg-white p-1 rounded-pill border shadow-sm" role="group">
+            <button type="button" onclick="changePeriod('day')" class="btn btn-sm rounded-pill px-3 py-1.5 fw-bold {{ $currentPeriod == 'day' ? 'btn-success text-white' : 'btn-light text-success bg-transparent border-0' }}">Day</button>
+            <button type="button" onclick="changePeriod('week')" class="btn btn-sm rounded-pill px-3 py-1.5 fw-bold {{ $currentPeriod == 'week' ? 'btn-success text-white' : 'btn-light text-success bg-transparent border-0' }}">Week</button>
+            <button type="button" onclick="changePeriod('month')" class="btn btn-sm rounded-pill px-3 py-1.5 fw-bold {{ $currentPeriod == 'month' ? 'btn-success text-white' : 'btn-light text-success bg-transparent border-0' }}">Month</button>
         </div>
-        <div class="bg-white p-1 rounded-3 shadow-sm d-flex border align-items-center px-2">
-            <span class="small fw-bold text-muted me-2">SAMPAI:</span>
-            <input type="date" name="tanggal_akhir" value="{{ $tanggal_akhir }}" class="form-control form-control-sm border-0 p-0 shadow-none fw-bold text-success" style="width: 130px; font-size: 0.8rem;" onchange="this.form.submit()">
+
+        <div class="d-flex align-items-center gap-2">
+            <!-- Arrow Left -->
+            <button type="button" onclick="navigate(-1)" class="btn btn-white border rounded-3 px-3 py-1.5 shadow-sm text-secondary">
+                <i class="bi bi-chevron-left"></i>
+            </button>
+
+            <!-- Month Dropdown Toggle (Always Month/Year dropdown) -->
+            <div class="dropdown d-inline-block">
+                <button class="btn btn-white border rounded-3 px-4 py-1.5 shadow-sm fw-bold text-success dropdown-toggle no-caret" type="button" id="date-label-btn" data-bs-toggle="dropdown" aria-expanded="false" style="font-size: 0.9rem; min-width: 140px;">
+                    {{ $dateLabel }}
+                </button>
+                <div class="dropdown-menu dropdown-menu-end p-3 border-0 shadow-lg rounded-4 mt-2" aria-labelledby="date-label-btn" style="min-width: 280px; z-index: 1050;">
+                    <!-- Year Navigation -->
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <button type="button" class="btn btn-link btn-sm text-dark p-0" id="btn-prev-year"><i class="bi bi-chevron-left"></i></button>
+                        <span class="fw-bold text-dark" id="year-display">{{ $currentYear }}</span>
+                        <button type="button" class="btn btn-link btn-sm text-dark p-0" id="btn-next-year"><i class="bi bi-chevron-right"></i></button>
+                    </div>
+                    <!-- Months Grid -->
+                    <div class="row g-2 text-center" id="months-grid">
+                        @php
+                            $months = [
+                                1 => 'Jan', 2 => 'Feb', 3 => 'Mar', 4 => 'Apr', 
+                                5 => 'Mei', 6 => 'Jun', 7 => 'Jul', 8 => 'Agt', 
+                                9 => 'Sep', 10 => 'Okt', 11 => 'Nov', 12 => 'Des'
+                            ];
+                        @endphp
+                        @foreach($months as $num => $name)
+                            <div class="col-4">
+                                <button type="button" class="btn btn-sm w-100 py-2 rounded-3 fw-semibold month-select-btn {{ $num == $currentMonth ? 'btn-success text-white' : 'btn-light text-dark bg-transparent border-0' }}" data-month="{{ $num }}">
+                                    {{ $name }}
+                                </button>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+
+            <!-- Arrow Right -->
+            <button type="button" onclick="navigate(1)" class="btn btn-white border rounded-3 px-3 py-1.5 shadow-sm text-secondary">
+                <i class="bi bi-chevron-right"></i>
+            </button>
         </div>
-    </form>
+
+        <!-- Hidden Form for GET submission -->
+        <form id="filter-form" action="{{ route('dashboard') }}" method="GET" class="no-loader d-none">
+            <input type="hidden" name="waktu_sholat" value="{{ $waktuSholat }}">
+            <input type="hidden" name="period" id="filter-period" value="{{ $currentPeriod }}">
+            <input type="hidden" name="tanggal_mulai" id="filter-tanggal-mulai" value="{{ $tanggal_mulai }}">
+            <input type="hidden" name="tanggal_akhir" id="filter-tanggal-akhir" value="{{ $tanggal_akhir }}">
+        </form>
+    </div>
 </div>
 
-<!-- 4 Summary Cards -->
+<!-- 3 Summary Cards -->
 <div class="row g-3 mb-4">
     <!-- Card 1 -->
-    <div class="col-xl-3 col-md-6">
+    <div class="col-md-4">
         <div class="card card-stats h-100 p-3">
             <div class="d-flex justify-content-between align-items-start mb-2">
                 <div class="text-muted small fw-semibold">Total Santri</div>
@@ -115,7 +192,7 @@
         </div>
     </div>
     <!-- Card 2 -->
-    <div class="col-xl-3 col-md-6">
+    <div class="col-md-4">
         <div class="card card-stats h-100 p-3">
             <div class="d-flex justify-content-between align-items-start mb-2">
                 <div class="text-muted small fw-semibold">Hadir Periode Ini</div>
@@ -128,68 +205,29 @@
         </div>
     </div>
     <!-- Card 3 -->
-    <div class="col-xl-3 col-md-6">
+    <div class="col-md-4">
         <div class="card card-stats h-100 p-3">
             <div class="d-flex justify-content-between align-items-start mb-2">
                 <div class="text-muted small fw-semibold">Tidak Hadir</div>
-                <form id="sholatFilterForm" action="{{ route('dashboard') }}" method="GET" class="m-0 no-loader">
-                    <input type="hidden" name="tanggal_mulai" value="{{ $tanggal_mulai }}">
-                    <input type="hidden" name="tanggal_akhir" value="{{ $tanggal_akhir }}">
-                    <input type="hidden" name="waktu_sholat" id="hidden_waktu_sholat" value="{{ $waktuSholat }}">
-                    
-                    <div class="dropdown">
-                        <button class="btn btn-sm bg-light text-muted fw-bold border-0 dropdown-toggle py-0 px-2 d-flex align-items-center gap-1" type="button" id="sholatDashboardDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="font-size: 0.7rem; border-radius: 0.5rem; height: 24px;">
-                            {{ $waktuSholat ?: 'Semua Waktu ' }} <i class="bi bi-chevron-down" style="font-size: 0.6rem;"></i>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end shadow border-0" aria-labelledby="sholatDashboardDropdown" style="border-radius: 0.75rem; padding: 0.4rem; font-size: 0.8rem;">
-                            <li><a class="dropdown-item py-1 {{ $waktuSholat == '' ? 'active' : '' }}" href="javascript:void(0)" onclick="submitSholatFilter('')">Semua Waktu</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item py-1 {{ $waktuSholat == 'Subuh' ? 'active' : '' }}" href="javascript:void(0)" onclick="submitSholatFilter('Subuh')">Subuh</a></li>
-                            <li><a class="dropdown-item py-1 {{ $waktuSholat == 'Dzuhur' ? 'active' : '' }}" href="javascript:void(0)" onclick="submitSholatFilter('Dzuhur')">Dzuhur</a></li>
-                            <li><a class="dropdown-item py-1 {{ $waktuSholat == 'Ashar' ? 'active' : '' }}" href="javascript:void(0)" onclick="submitSholatFilter('Ashar')">Ashar</a></li>
-                            <li><a class="dropdown-item py-1 {{ $waktuSholat == 'Maghrib' ? 'active' : '' }}" href="javascript:void(0)" onclick="submitSholatFilter('Maghrib')">Maghrib</a></li>
-                            <li><a class="dropdown-item py-1 {{ $waktuSholat == 'Isya' ? 'active' : '' }}" href="javascript:void(0)" onclick="submitSholatFilter('Isya')">Isya</a></li>
-                        </ul>
-                    </div>
-                </form>
+                <i class="bi bi-person-x text-danger"></i>
             </div>
             <div class="h3 mb-1 fw-bold text-dark">{{ number_format($tidakHadir) }}</div>
             <div class="small text-muted d-flex justify-content-between align-items-center mt-auto pt-2">
-                <span>{{ $waktuSholat ? 'Pada waktu ' . $waktuSholat : 'Total tidak hadir periode ini' }}</span>
+                <span>Total tidak hadir periode ini</span>
                 @if($tidakHadir > 0)
                 <button type="button" class="btn btn-sm btn-link text-success p-0 text-decoration-none fw-bold" data-bs-toggle="modal" data-bs-target="#modalTidakHadir" style="font-size: 0.75rem;">
                     Lihat Detail <i class="bi bi-arrow-right"></i>
                 </button>
                 @endif
             </div>
-
-            <script>
-                function submitSholatFilter(val) {
-                    document.getElementById('hidden_waktu_sholat').value = val;
-                    document.getElementById('sholatFilterForm').submit();
-                }
-            </script>
-        </div>
-    </div>
-    <!-- Card 4 -->
-    <div class="col-xl-3 col-md-6">
-        <div class="card card-stats h-100 p-3">
-            <div class="d-flex justify-content-between align-items-start mb-2">
-                <div class="text-muted small fw-semibold">Persentase Kehadiran</div>
-                <i class="bi bi-graph-up-arrow text-success"></i>
-            </div>
-            <div class="h3 mb-1 fw-bold text-dark">{{ $persentase }}%</div>
-            <div class="small text-muted">
-                Dari total keseluruhan
-            </div>
         </div>
     </div>
 </div>
 
-<!-- Row for Izin and Alfa lists -->
+<!-- Row for Izin, Alfa, and Persentase lists/charts -->
 <div class="row g-4 mb-4">
     <!-- Izin Card -->
-    <div class="col-lg-6">
+    <div class="col-lg-4">
         <div class="card card-stats h-100 p-3">
             <div class="card-body p-0">
                 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -266,7 +304,7 @@
     </div>
 
     <!-- Alfa Card -->
-    <div class="col-lg-6">
+    <div class="col-lg-4">
         <div class="card card-stats h-100 p-3">
             <div class="card-body p-0">
                 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -332,6 +370,50 @@
                             <p class="text-muted small mb-0">Alhamdulillah, tidak ada santri alfa hari ini.</p>
                         </div>
                     @endif
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Persentase Kehadiran Card -->
+    <div class="col-lg-4">
+        <div class="card card-stats h-100 p-3">
+            <div class="card-body p-0 d-flex flex-column justify-content-between" style="min-height: 140px;">
+                <div>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="card-title fw-bold text-dark mb-0">Persentase Kehadiran</h5>
+                        <i class="bi bi-graph-up-arrow text-success fs-5"></i>
+                    </div>
+                    
+                    <div class="text-center py-2">
+                        <div class="position-relative d-inline-flex align-items-center justify-content-center">
+                            <!-- Circular Progress -->
+                            <svg width="100" height="100" viewBox="0 0 100 100" style="transform: rotate(-90deg);">
+                                <circle cx="50" cy="50" r="42" fill="transparent" stroke="#f3f4f6" stroke-width="8" />
+                                <circle cx="50" cy="50" r="42" fill="transparent" stroke="url(#percentageGrad)" stroke-width="8" 
+                                    stroke-dasharray="264" stroke-dashoffset="{{ 264 - (264 * $persentase) / 100 }}" stroke-linecap="round" />
+                                <defs>
+                                    <linearGradient id="percentageGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" stop-color="#198754" />
+                                        <stop offset="100%" stop-color="#2dc57b" />
+                                    </linearGradient>
+                                </defs>
+                            </svg>
+                            <div class="position-absolute text-center">
+                                <div class="h3 fw-bold text-dark mb-0">{{ $persentase }}%</div>
+                                <div class="text-muted" style="font-size: 0.65rem;">Kehadiran</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-light p-3 rounded-4 mt-auto">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="small text-muted" style="font-size: 0.75rem;">Status Kehadiran</div>
+                        <span class="badge bg-success bg-opacity-10 text-success fw-bold px-2 py-1" style="font-size: 0.7rem;">
+                            {{ $persentase >= 85 ? 'Sangat Baik' : ($persentase >= 70 ? 'Baik' : 'Perlu Perhatian') }}
+                        </span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -557,6 +639,146 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function() {
+        // Filter variables and functions
+        window.currentPeriod = "{{ $currentPeriod }}";
+        window.startDateStr = "{{ $tanggal_mulai }}";
+        window.endDateStr = "{{ $tanggal_akhir }}";
+        window.currentYear = parseInt("{{ $currentYear }}");
+
+        window.formatDateISO = function(date) {
+            let yyyy = date.getFullYear();
+            let mm = String(date.getMonth() + 1).padStart(2, '0');
+            let dd = String(date.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+        }
+
+        window.changePeriod = function(period) {
+            let date = new Date(window.startDateStr);
+            if (isNaN(date.getTime())) {
+                date = new Date();
+            }
+            
+            if (period === 'day') {
+                let dateStr = window.formatDateISO(date);
+                document.getElementById('filter-period').value = 'day';
+                document.getElementById('filter-tanggal-mulai').value = dateStr;
+                document.getElementById('filter-tanggal-akhir').value = dateStr;
+            } else if (period === 'week') {
+                let day = date.getDay();
+                let diffToMonday = date.getDate() - day + (day === 0 ? -6 : 1);
+                let monday = new Date(date.setDate(diffToMonday));
+                let sunday = new Date(monday);
+                sunday.setDate(monday.getDate() + 6);
+                
+                document.getElementById('filter-period').value = 'week';
+                document.getElementById('filter-tanggal-mulai').value = window.formatDateISO(monday);
+                document.getElementById('filter-tanggal-akhir').value = window.formatDateISO(sunday);
+            } else if (period === 'month') {
+                let firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
+                let lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+                
+                document.getElementById('filter-period').value = 'month';
+                document.getElementById('filter-tanggal-mulai').value = window.formatDateISO(firstDay);
+                document.getElementById('filter-tanggal-akhir').value = window.formatDateISO(lastDay);
+            }
+            document.getElementById('filter-form').submit();
+        }
+
+        window.navigate = function(direction) {
+            let date = new Date(window.startDateStr);
+            if (isNaN(date.getTime())) {
+                date = new Date();
+            }
+            
+            if (window.currentPeriod === 'day') {
+                date.setDate(date.getDate() + direction);
+                let dateStr = window.formatDateISO(date);
+                document.getElementById('filter-tanggal-mulai').value = dateStr;
+                document.getElementById('filter-tanggal-akhir').value = dateStr;
+            } else if (window.currentPeriod === 'week') {
+                date.setDate(date.getDate() + (direction * 7));
+                let day = date.getDay();
+                let diffToMonday = date.getDate() - day + (day === 0 ? -6 : 1);
+                let monday = new Date(date.setDate(diffToMonday));
+                let sunday = new Date(monday);
+                sunday.setDate(monday.getDate() + 6);
+                
+                document.getElementById('filter-tanggal-mulai').value = window.formatDateISO(monday);
+                document.getElementById('filter-tanggal-akhir').value = window.formatDateISO(sunday);
+            } else if (window.currentPeriod === 'month') {
+                date.setMonth(date.getMonth() + direction);
+                let firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
+                let lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+                
+                document.getElementById('filter-tanggal-mulai').value = window.formatDateISO(firstDay);
+                document.getElementById('filter-tanggal-akhir').value = window.formatDateISO(lastDay);
+            }
+            document.getElementById('filter-form').submit();
+        }
+
+        const yearDisplay = document.getElementById('year-display');
+        const btnPrevYear = document.getElementById('btn-prev-year');
+        const btnNextYear = document.getElementById('btn-next-year');
+        
+        if (yearDisplay && btnPrevYear && btnNextYear) {
+            btnPrevYear.addEventListener('click', (e) => {
+                e.stopPropagation();
+                window.currentYear--;
+                yearDisplay.textContent = window.currentYear;
+                updateMonthGridActiveYear();
+            });
+            
+            btnNextYear.addEventListener('click', (e) => {
+                e.stopPropagation();
+                window.currentYear++;
+                yearDisplay.textContent = window.currentYear;
+                updateMonthGridActiveYear();
+            });
+        }
+
+        const monthButtons = document.querySelectorAll('.month-select-btn');
+        monthButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const monthNum = parseInt(btn.getAttribute('data-month'));
+                
+                if (window.currentPeriod === 'day') {
+                    const firstDay = new Date(window.currentYear, monthNum - 1, 1);
+                    document.getElementById('filter-tanggal-mulai').value = window.formatDateISO(firstDay);
+                    document.getElementById('filter-tanggal-akhir').value = window.formatDateISO(firstDay);
+                } else if (window.currentPeriod === 'week') {
+                    const firstDay = new Date(window.currentYear, monthNum - 1, 1);
+                    const seventhDay = new Date(window.currentYear, monthNum - 1, 7);
+                    document.getElementById('filter-tanggal-mulai').value = window.formatDateISO(firstDay);
+                    document.getElementById('filter-tanggal-akhir').value = window.formatDateISO(seventhDay);
+                } else {
+                    const firstDay = new Date(window.currentYear, monthNum - 1, 1);
+                    const lastDay = new Date(window.currentYear, monthNum, 0);
+                    document.getElementById('filter-tanggal-mulai').value = window.formatDateISO(firstDay);
+                    document.getElementById('filter-tanggal-akhir').value = window.formatDateISO(lastDay);
+                }
+                
+                document.getElementById('filter-period').value = window.currentPeriod;
+                document.getElementById('filter-form').submit();
+            });
+        });
+
+        function updateMonthGridActiveYear() {
+            const phpMonth = parseInt("{{ $currentMonth }}");
+            const phpYear = parseInt("{{ $currentYear }}");
+            
+            monthButtons.forEach(btn => {
+                const m = parseInt(btn.getAttribute('data-month'));
+                if (window.currentYear === phpYear && m === phpMonth) {
+                    btn.classList.remove('btn-light', 'bg-transparent', 'border-0', 'text-dark');
+                    btn.classList.add('btn-success', 'text-white');
+                } else {
+                    btn.classList.add('btn-light', 'bg-transparent', 'border-0', 'text-dark');
+                    btn.classList.remove('btn-success', 'text-white');
+                }
+            });
+        }
+
         // Attendance Trend Chart
         const trendCtx = document.getElementById('attendanceTrendChart').getContext('2d');
         const trendGradient = trendCtx.createLinearGradient(0, 0, 0, 300);

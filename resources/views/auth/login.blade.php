@@ -72,9 +72,9 @@
     }
     
     .btn-outline-custom {
-        background-color: #ffffff;
-        border: 1px solid #e5e7eb;
-        color: #2563eb; /* Blue text */
+        background-color: transparent;
+        border: 1px solid #10b981;
+        color: #10b981;
         font-weight: 600;
         border-radius: 0.75rem;
         padding: 0.75rem 1.25rem;
@@ -85,9 +85,9 @@
         text-align: center;
     }
     .btn-outline-custom:hover {
-        background-color: #f9fafb;
-        border-color: #d1d5db;
-        color: #1d4ed8;
+        background-color: rgba(16, 185, 129, 0.05);
+        border-color: #10b981;
+        color: #059669;
     }
     
     /* Right visual panel */

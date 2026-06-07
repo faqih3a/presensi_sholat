@@ -21,17 +21,14 @@ class SantriDashboardController extends Controller
         $this->syncAlfas();
 
         $waktuSholat = $request->waktu_sholat;
-        $period = $request->get('period', 'today');
+        $period = $request->get('period', 'day');
 
         $today = \Carbon\Carbon::now('Asia/Jakarta')->format('Y-m-d');
-        $startDate = $today;
-        $endDate = $today;
+        $tanggal_mulai = $request->get('tanggal_mulai', $today);
+        $tanggal_akhir = $request->get('tanggal_akhir', $today);
 
-        if ($period === 'week') {
-            $startDate = \Carbon\Carbon::now('Asia/Jakarta')->subDays(6)->format('Y-m-d');
-        } elseif ($period === 'month') {
-            $startDate = \Carbon\Carbon::now('Asia/Jakarta')->subDays(29)->format('Y-m-d');
-        }
+        $startDate = $tanggal_mulai;
+        $endDate = $tanggal_akhir;
 
         // Get personal presensi history
         $query = Presensi::where('santri_id', $user->santri->id)
@@ -49,7 +46,10 @@ class SantriDashboardController extends Controller
         $totalHadir = $presensis->where('status', 'Hadir')->count();
         $totalAlfa = $presensis->where('status', 'Alfa')->count();
 
-        return view('santri.dashboard', compact('presensis', 'user', 'totalHadir', 'totalAlfa', 'period', 'waktuSholat'));
+        return view('santri.dashboard', compact(
+            'presensis', 'user', 'totalHadir', 'totalAlfa', 
+            'period', 'waktuSholat', 'tanggal_mulai', 'tanggal_akhir'
+        ));
     }
 
     public function export(Request $request)
@@ -61,17 +61,14 @@ class SantriDashboardController extends Controller
         }
 
         $waktuSholat = $request->waktu_sholat;
-        $period = $request->get('period', 'today');
+        $period = $request->get('period', 'day');
 
         $today = \Carbon\Carbon::now('Asia/Jakarta')->format('Y-m-d');
-        $startDate = $today;
-        $endDate = $today;
+        $tanggal_mulai = $request->get('tanggal_mulai', $today);
+        $tanggal_akhir = $request->get('tanggal_akhir', $today);
 
-        if ($period === 'week') {
-            $startDate = \Carbon\Carbon::now('Asia/Jakarta')->subDays(6)->format('Y-m-d');
-        } elseif ($period === 'month') {
-            $startDate = \Carbon\Carbon::now('Asia/Jakarta')->subDays(29)->format('Y-m-d');
-        }
+        $startDate = $tanggal_mulai;
+        $endDate = $tanggal_akhir;
 
         $query = Presensi::where('santri_id', $user->santri->id)
             ->whereBetween('tanggal', [$startDate, $endDate])
@@ -147,6 +144,11 @@ class SantriDashboardController extends Controller
 
         foreach ($times as $sholat => $endTime) {
             if ($now->greaterThan($endTime)) {
+                $cacheKey = 'sync_alfa_' . $today . '_' . $sholat . '_santri_' . $santriId;
+                if (\Illuminate\Support\Facades\Cache::has($cacheKey)) {
+                    continue;
+                }
+
                 $exists = Presensi::withTrashed()
                     ->where('santri_id', $santriId)
                     ->where('tanggal', $today)
@@ -162,6 +164,8 @@ class SantriDashboardController extends Controller
                         'waktu_hadir' => null
                     ]);
                 }
+
+                \Illuminate\Support\Facades\Cache::put($cacheKey, true, 86400);
             }
         }
         

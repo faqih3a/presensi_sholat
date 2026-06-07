@@ -25,26 +25,19 @@ class DashboardController extends Controller
         $startDate = $tanggal_mulai;
         $endDate = $tanggal_akhir;
 
-        // Hitung santri yang hadir (status Hadir) dalam periode tersebut
-        $hadirQuery = \App\Models\Presensi::whereBetween('tanggal', [$startDate, $endDate])->where('status', 'Hadir');
+        // Hitung santri yang Hadir, Alfa, Izin menggunakan query tunggal GROUP BY
+        $countsQuery = \App\Models\Presensi::whereBetween('tanggal', [$startDate, $endDate]);
         if ($waktuSholat) {
-            $hadirQuery->where('waktu_sholat', $waktuSholat);
+            $countsQuery->where('waktu_sholat', $waktuSholat);
         }
-        $hadirHariIni = $hadirQuery->distinct('santri_id')->count('santri_id');
-        
-        // Hitung santri yang Alfa (status Alfa) dalam periode tersebut
-        $alfaQuery = \App\Models\Presensi::whereBetween('tanggal', [$startDate, $endDate])->where('status', 'Alfa');
-        if ($waktuSholat) {
-            $alfaQuery->where('waktu_sholat', $waktuSholat);
-        }
-        $totalAlfa = $alfaQuery->distinct('santri_id')->count('santri_id');
+        $statusCounts = $countsQuery->groupBy('status')
+                                    ->selectRaw('status, count(distinct santri_id) as total')
+                                    ->pluck('total', 'status')
+                                    ->toArray();
 
-        // Hitung santri yang Izin (status Izin) dalam periode tersebut
-        $izinQuery = \App\Models\Presensi::whereBetween('tanggal', [$startDate, $endDate])->where('status', 'Izin');
-        if ($waktuSholat) {
-            $izinQuery->where('waktu_sholat', $waktuSholat);
-        }
-        $totalIzin = $izinQuery->distinct('santri_id')->count('santri_id');
+        $hadirHariIni = $statusCounts['Hadir'] ?? 0;
+        $totalAlfa = $statusCounts['Alfa'] ?? 0;
+        $totalIzin = $statusCounts['Izin'] ?? 0;
 
         // Untuk tampilan dashboard, "Tidak Hadir" mencakup Alfa dan Izin
         $tidakHadir = $totalAlfa + $totalIzin;
@@ -52,27 +45,24 @@ class DashboardController extends Controller
         // Persentase kehadiran
         $persentase = $totalSantri > 0 ? round(($hadirHariIni / $totalSantri) * 100, 1) : 0;
 
-        // Fetch absent santris (Alfa or Izin)
-        $absentSantris = collect();
+        // Fetch absent santris (Alfa or Izin) dengan Eager Loading
         $absentRecords = \App\Models\Presensi::whereBetween('tanggal', [$startDate, $endDate])
-                                            ->whereIn('status', ['Alfa', 'Izin']);
+                                            ->whereIn('status', ['Alfa', 'Izin'])
+                                            ->with('santri');
         if ($waktuSholat) {
             $absentRecords->where('waktu_sholat', $waktuSholat);
         }
         
         $absentRecords = $absentRecords->get();
-        $absentSantriIds = $absentRecords->pluck('santri_id')->unique();
-        $santriModels = \App\Models\Santri::whereIn('id', $absentSantriIds)->get()->keyBy('id');
-
-        $absentSantris = $absentRecords->map(function($record) use ($santriModels) {
-            $santri = $santriModels->get($record->santri_id);
+        $absentSantris = $absentRecords->map(function($record) {
+            $santri = $record->santri;
             if ($santri) {
                 $santri->current_status = $record->status;
             }
             return $santri;
         })->filter()->unique('id');
 
-        // Data untuk grafik kehadiran
+        // Data untuk grafik kehadiran (optimasi 31 query menjadi 1 query tunggal GROUP BY)
         $chartLabels = [];
         $chartData = [];
         
@@ -84,32 +74,30 @@ class DashboardController extends Controller
             $start = $end->copy()->subDays(30);
         }
 
+        $presensiCounts = \App\Models\Presensi::whereBetween('tanggal', [$start->format('Y-m-d'), $end->format('Y-m-d')])
+            ->groupBy('tanggal')
+            ->selectRaw('tanggal, count(distinct santri_id) as total')
+            ->pluck('total', 'tanggal')
+            ->toArray();
+
         while ($start->lte($end)) {
             $dateStr = $start->format('Y-m-d');
             $chartLabels[] = $start->format('d M');
-            
-            $count = \App\Models\Presensi::where('tanggal', $dateStr)
-                                         ->distinct('santri_id')
-                                         ->count('santri_id');
-            $chartData[] = $count;
+            $chartData[] = $presensiCounts[$dateStr] ?? 0;
             $start->addDay();
         }
 
         // Ambil jadwal sholat untuk tanggal akhir range
         $jadwal = $this->getJadwalSholat(\Carbon\Carbon::parse($endDate, 'Asia/Jakarta'));
 
-        // Fetch specifically for the range's Izin and Alfa lists
-        $izinTodayRecords = \App\Models\Presensi::whereBetween('tanggal', [$startDate, $endDate])
-                                            ->where('status', 'Izin')
+        // Fetch records in one query
+        $bothRecords = \App\Models\Presensi::whereBetween('tanggal', [$startDate, $endDate])
+                                            ->whereIn('status', ['Izin', 'Alfa'])
                                             ->with('santri')
-                                            ->get()
-                                            ->groupBy('santri_id');
+                                            ->get();
 
-        $alfaTodayRecords = \App\Models\Presensi::whereBetween('tanggal', [$startDate, $endDate])
-                                            ->where('status', 'Alfa')
-                                            ->with('santri')
-                                            ->get()
-                                            ->groupBy('santri_id');
+        $izinTodayRecords = $bothRecords->where('status', 'Izin')->groupBy('santri_id');
+        $alfaTodayRecords = $bothRecords->where('status', 'Alfa')->groupBy('santri_id');
 
         // Identify santris with approved permits covering the range
         $fullDayIzinSantriIds = \App\Models\Santri::whereIn('user_id', function($query) use ($startDate, $endDate) {
@@ -126,16 +114,20 @@ class DashboardController extends Controller
                   });
         })->pluck('id')->toArray();
 
-        // Data for status distribution chart
-        $distQuery = \App\Models\Presensi::whereBetween('tanggal', [$startDate, $endDate]);
+        // Data for status distribution chart (optimasi 3 queries menjadi 1 query tunggal GROUP BY)
+        $distData = \App\Models\Presensi::whereBetween('tanggal', [$startDate, $endDate]);
         if ($waktuSholat) {
-            $distQuery->where('waktu_sholat', $waktuSholat);
+            $distData->where('waktu_sholat', $waktuSholat);
         }
-        
+        $distCounts = $distData->groupBy('status')
+                               ->selectRaw('status, count(*) as total')
+                               ->pluck('total', 'status')
+                               ->toArray();
+                               
         $statusData = [
-            (clone $distQuery)->where('status', 'Hadir')->count(),
-            (clone $distQuery)->where('status', 'Izin')->count(),
-            (clone $distQuery)->where('status', 'Alfa')->count(),
+            $distCounts['Hadir'] ?? 0,
+            $distCounts['Izin'] ?? 0,
+            $distCounts['Alfa'] ?? 0,
         ];
 
         return view('dashboard.index', compact(
@@ -156,9 +148,7 @@ class DashboardController extends Controller
         $status = $request->get('status');
         $search = $request->get('search');
 
-        $now = \Carbon\Carbon::now('Asia/Jakarta');
-        
-        // Fetch real records
+        // Fetch real records from the database
         $query = Presensi::with('santri')
                          ->whereBetween('tanggal', [$tanggal_mulai, $tanggal_akhir]);
                          
@@ -174,68 +164,9 @@ class DashboardController extends Controller
             });
         }
         
-        $realRecordsAll = (clone $query)->withTrashed()->get();
-        $realRecordsGrouped = $realRecordsAll->groupBy(['tanggal', 'santri_id', 'waktu_sholat']);
-        $realRecords = $realRecordsAll->filter(function($r) {
-            return !$r->trashed();
-        });
-
-        // Synthesize missing records for the entire range
-        $synthesized = collect();
-        $sholats = ['Subuh', 'Dzuhur', 'Ashar', 'Maghrib', 'Isya'];
-        $sholatList = $waktuSholat ? [$waktuSholat] : $sholats;
-
-        $santriQuery = Santri::query();
-        if ($search) $santriQuery->where('nama', 'like', '%' . $search . '%');
-        $santris = $santriQuery->get();
-
-        $currentDate = \Carbon\Carbon::parse($tanggal_mulai, 'Asia/Jakarta');
-        $endRangeDate = \Carbon\Carbon::parse($tanggal_akhir, 'Asia/Jakarta');
-
-        while ($currentDate->lte($endRangeDate)) {
-            $dateStr = $currentDate->format('Y-m-d');
-            $jadwal = $this->getJadwalSholat($currentDate);
-            $times = $jadwal ? $this->getPrayerEndTimes($dateStr, $jadwal) : [];
-
-            foreach ($santris as $santri) {
-                foreach ($sholatList as $s) {
-                    if (!isset($realRecordsGrouped[$dateStr][$santri->id][$s])) {
-                        $hasIzin = Izin::where('user_id', $santri->user_id)
-                                                ->where('status', 'Disetujui')
-                                                ->whereDate('tanggal_mulai', '<=', $dateStr)
-                                                ->whereDate('tanggal_selesai', '>=', $dateStr)
-                                                ->exists();
-
-                        $virtualStatus = $hasIzin ? 'Izin' : 'Alfa';
-                        
-                        if (!$status || $status === $virtualStatus) {
-                            // Check if time has passed for this prayer
-                            if ($dateStr === $now->format('Y-m-d') && $jadwal && isset($times[$s])) {
-                                if ($now->lessThan($times[$s])) {
-                                    continue; // Skip if it's not yet time to be Alfa today
-                                }
-                            } elseif ($currentDate->greaterThan($now)) {
-                                continue; // Skip future dates
-                            }
-
-                            $synthesized->push((object) [
-                                'santri' => $santri,
-                                'santri_id' => $santri->id,
-                                'waktu_sholat' => $s,
-                                'tanggal' => $dateStr,
-                                'waktu_hadir' => null,
-                                'status' => $virtualStatus
-                            ]);
-                        }
-                    }
-                }
-            }
-            $currentDate->addDay();
-        }
-
-        $presensis = $realRecords->concat($synthesized)
-                                ->sortByDesc('waktu_hadir')
-                                ->sortByDesc('tanggal');
+        $presensis = $query->latest('tanggal')
+                            ->latest('waktu_hadir')
+                            ->get();
 
         return view('dashboard.kehadiran', compact('presensis', 'tanggal_mulai', 'tanggal_akhir', 'waktuSholat', 'status'));
     }
@@ -249,9 +180,7 @@ class DashboardController extends Controller
         $status = $request->get('status');
         $search = $request->get('search');
 
-        $now = \Carbon\Carbon::now('Asia/Jakarta');
-        
-        // Fetch real records
+        // Fetch real records from the database
         $query = Presensi::with('santri')
                          ->whereBetween('tanggal', [$tanggal_mulai, $tanggal_akhir]);
                          
@@ -267,67 +196,9 @@ class DashboardController extends Controller
             });
         }
         
-        $realRecordsAll = (clone $query)->withTrashed()->get();
-        $realRecordsGrouped = $realRecordsAll->groupBy(['tanggal', 'santri_id', 'waktu_sholat']);
-        $realRecords = $realRecordsAll->filter(function($r) {
-            return !$r->trashed();
-        });
-
-        // Synthesize missing records
-        $synthesized = collect();
-        $sholats = ['Subuh', 'Dzuhur', 'Ashar', 'Maghrib', 'Isya'];
-        $sholatList = $waktuSholat ? [$waktuSholat] : $sholats;
-
-        $santriQuery = Santri::query();
-        if ($search) $santriQuery->where('nama', 'like', '%' . $search . '%');
-        $santris = $santriQuery->get();
-
-        $currentDate = \Carbon\Carbon::parse($tanggal_mulai, 'Asia/Jakarta');
-        $endRangeDate = \Carbon\Carbon::parse($tanggal_akhir, 'Asia/Jakarta');
-
-        while ($currentDate->lte($endRangeDate)) {
-            $dateStr = $currentDate->format('Y-m-d');
-            $jadwal = $this->getJadwalSholat($currentDate);
-            $times = $jadwal ? $this->getPrayerEndTimes($dateStr, $jadwal) : [];
-
-            foreach ($santris as $santri) {
-                foreach ($sholatList as $s) {
-                    if (!isset($realRecordsGrouped[$dateStr][$santri->id][$s])) {
-                        $hasIzin = Izin::where('user_id', $santri->user_id)
-                                                ->where('status', 'Disetujui')
-                                                ->whereDate('tanggal_mulai', '<=', $dateStr)
-                                                ->whereDate('tanggal_selesai', '>=', $dateStr)
-                                                ->exists();
-
-                        $virtualStatus = $hasIzin ? 'Izin' : 'Alfa';
-                        
-                        if (!$status || $status === $virtualStatus) {
-                            if ($dateStr === $now->format('Y-m-d') && $jadwal && isset($times[$s])) {
-                                if ($now->lessThan($times[$s])) {
-                                    continue;
-                                }
-                            } elseif ($currentDate->greaterThan($now)) {
-                                continue;
-                            }
-
-                            $synthesized->push((object) [
-                                'santri' => $santri,
-                                'santri_id' => $santri->id,
-                                'waktu_sholat' => $s,
-                                'tanggal' => $dateStr,
-                                'waktu_hadir' => null,
-                                'status' => $virtualStatus
-                            ]);
-                        }
-                    }
-                }
-            }
-            $currentDate->addDay();
-        }
-
-        $presensis = $realRecords->concat($synthesized)
-                                ->sortByDesc('waktu_hadir')
-                                ->sortByDesc('tanggal');
+        $presensis = $query->latest('tanggal')
+                            ->latest('waktu_hadir')
+                            ->get();
         
         $filename = "rekap_kehadiran_" . date('Y-m-d_H-i-s') . ".csv";
         
@@ -369,6 +240,7 @@ class DashboardController extends Controller
     {
         $now = \Carbon\Carbon::now('Asia/Jakarta');
         $today = $now->format('Y-m-d');
+        $yesterday = $now->copy()->subDay()->format('Y-m-d');
         
         // Ambil jadwal sholat hari ini
         $jadwal = $this->getJadwalSholat($now);
@@ -383,14 +255,27 @@ class DashboardController extends Controller
             'Isha' => 'Isya'
         ];
 
-        // Tentukan batas waktu sholat (misal: sholat dianggap selesai saat waktu sholat berikutnya tiba)
-        // Kecuali Isya yang kita beri batas misal jam 23:59 atau Fajr besok.
+        // Tentukan batas waktu sholat
         $times = $this->getPrayerEndTimes($today, $jadwal);
 
         $santris = \App\Models\Santri::all();
 
+        // Fetch all approved permits for today and yesterday to avoid N+1 queries
+        $activeIzins = \App\Models\Izin::where('status', 'Disetujui')
+            ->where(function($q) use ($today, $yesterday) {
+                $q->whereDate('tanggal_mulai', '<=', $today)
+                  ->whereDate('tanggal_selesai', '>=', $yesterday);
+            })
+            ->get();
+        $activeIzinsGrouped = $activeIzins->groupBy('user_id');
+
         foreach ($times as $sholat => $endTime) {
             if ($now->greaterThan($endTime)) {
+                $cacheKey = 'sync_alfa_' . $today . '_' . $sholat;
+                if (\Illuminate\Support\Facades\Cache::has($cacheKey)) {
+                    continue;
+                }
+
                 // Cari santri yang TIDAK punya record presensi untuk sholat ini hari ini
                 $presentSantriIds = Presensi::withTrashed()
                                             ->where('tanggal', $today)
@@ -401,11 +286,10 @@ class DashboardController extends Controller
                 foreach ($santris as $santri) {
                     if (!in_array($santri->id, $presentSantriIds)) {
                         // Cek apakah santri punya izin yang disetujui hari ini
-                        $hasIzin = \App\Models\Izin::where('user_id', $santri->user_id)
-                                                ->where('status', 'Disetujui')
-                                                ->whereDate('tanggal_mulai', '<=', $today)
-                                                ->whereDate('tanggal_selesai', '>=', $today)
-                                                ->exists();
+                        $userIzins = $activeIzinsGrouped->get($santri->user_id) ?? collect();
+                        $hasIzin = $userIzins->contains(function ($izin) use ($today) {
+                            return $today >= $izin->tanggal_mulai && $today <= $izin->tanggal_selesai;
+                        });
                         
                         $status = $hasIzin ? 'Izin' : 'Alfa';
 
@@ -419,11 +303,13 @@ class DashboardController extends Controller
                         ]);
                     }
                 }
+
+                // Cache today's prayer sync to avoid heavy db loops
+                \Illuminate\Support\Facades\Cache::put($cacheKey, true, 86400);
             }
         }
         
         // Opsional: Cek juga hari kemarin jika ada yang tertinggal
-        $yesterday = $now->copy()->subDay()->format('Y-m-d');
         $hasYesterdaySync = \Illuminate\Support\Facades\Cache::get('sync_alfa_' . $yesterday);
         if (!$hasYesterdaySync) {
             foreach ($mapping as $apiName => $sysName) {
@@ -435,11 +321,10 @@ class DashboardController extends Controller
 
                 foreach ($santris as $santri) {
                     if (!in_array($santri->id, $presentSantriIds)) {
-                        $hasIzin = \App\Models\Izin::where('user_id', $santri->user_id)
-                                                ->where('status', 'Disetujui')
-                                                ->whereDate('tanggal_mulai', '<=', $yesterday)
-                                                ->whereDate('tanggal_selesai', '>=', $yesterday)
-                                                ->exists();
+                        $userIzins = $activeIzinsGrouped->get($santri->user_id) ?? collect();
+                        $hasIzin = $userIzins->contains(function ($izin) use ($yesterday) {
+                            return $yesterday >= $izin->tanggal_mulai && $yesterday <= $izin->tanggal_selesai;
+                        });
                         
                         $status = $hasIzin ? 'Izin' : 'Alfa';
 
@@ -490,11 +375,11 @@ class DashboardController extends Controller
     private function getPrayerEndTimes($date, $jadwal)
     {
         return [
-            'Subuh' => \Carbon\Carbon::parse($date . ' ' . $jadwal['Fajr'], 'Asia/Jakarta')->addMinutes(15),
-            'Dzuhur' => \Carbon\Carbon::parse($date . ' ' . $jadwal['Dhuhr'], 'Asia/Jakarta')->addMinutes(15),
-            'Ashar' => \Carbon\Carbon::parse($date . ' ' . $jadwal['Asr'], 'Asia/Jakarta')->addMinutes(15),
+            'Subuh' => \Carbon\Carbon::parse($date . ' ' . $jadwal['Fajr'], 'Asia/Jakarta')->addMinutes(10),
+            'Dzuhur' => \Carbon\Carbon::parse($date . ' ' . $jadwal['Dhuhr'], 'Asia/Jakarta')->addMinutes(10),
+            'Ashar' => \Carbon\Carbon::parse($date . ' ' . $jadwal['Asr'], 'Asia/Jakarta')->addMinutes(10),
             'Maghrib' => \Carbon\Carbon::parse($date . ' ' . $jadwal['Maghrib'], 'Asia/Jakarta')->addMinutes(10),
-            'Isya' => \Carbon\Carbon::parse($date . ' ' . $jadwal['Isha'], 'Asia/Jakarta')->addMinutes(15),
+            'Isya' => \Carbon\Carbon::parse($date . ' ' . $jadwal['Isha'], 'Asia/Jakarta')->addMinutes(10),
         ];
     }
 }

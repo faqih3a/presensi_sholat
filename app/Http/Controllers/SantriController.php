@@ -12,7 +12,7 @@ class SantriController extends Controller
 {
     public function create()
     {
-        return view('santri.register');
+        return redirect()->route('santri.index', ['register' => 1]);
     }
 
     public function store(Request $request)

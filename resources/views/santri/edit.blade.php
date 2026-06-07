@@ -179,7 +179,7 @@
     async function loadModels() {
         try {
             await Promise.all([
-                faceapi.nets.ssdMobilenetv1.loadFromUri('/models'),
+                faceapi.nets.tinyFaceDetector.loadFromUri('/models'),
                 faceapi.nets.faceLandmark68Net.loadFromUri('/models'),
                 faceapi.nets.faceRecognitionNet.loadFromUri('/models')
             ]);
@@ -229,7 +229,7 @@
         imagePreview.onload = async () => {
             if(imagePreview.src.startsWith('blob:')) {
                 try {
-                    const detection = await faceapi.detectSingleFace(imagePreview).withFaceLandmarks().withFaceDescriptor();
+                    const detection = await faceapi.detectSingleFace(imagePreview, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 })).withFaceLandmarks().withFaceDescriptor();
 
                     if (!detection) {
                         throw new Error('Wajah tidak ditemukan. Gunakan foto yang lebih jelas.');

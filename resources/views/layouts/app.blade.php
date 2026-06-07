@@ -364,6 +364,35 @@
         body.dark-mode .modal-content { background-color: #1e1e1e; border-color: #333; }
         body.dark-mode .modal-header, body.dark-mode .modal-footer { border-color: #333; }
         body.dark-mode .close, body.dark-mode .btn-close { filter: invert(1) grayscale(100%) brightness(200%); }
+
+        /* Unified Theme Success Buttons & Backgrounds */
+        .btn-theme-success {
+            color: #fff !important;
+            background: linear-gradient(310deg, #198754 0%, #2dc57b 100%) !important;
+            border: none !important;
+            transition: all 0.2s ease !important;
+            box-shadow: 0 4px 6px rgba(25, 135, 84, 0.15) !important;
+        }
+        .btn-theme-success:hover {
+            opacity: 0.9 !important;
+            transform: translateY(-1px) !important;
+            box-shadow: 0 6px 12px rgba(25, 135, 84, 0.2) !important;
+        }
+        .btn-outline-theme-success {
+            color: #198754 !important;
+            border: 1px solid #198754 !important;
+            background: transparent !important;
+            transition: all 0.2s ease !important;
+        }
+        .btn-outline-theme-success:hover {
+            background: rgba(25, 135, 84, 0.05) !important;
+            color: #198754 !important;
+            border-color: #198754 !important;
+            transform: translateY(-1px) !important;
+        }
+        .bg-theme-success {
+            background: linear-gradient(310deg, #198754 0%, #2dc57b 100%) !important;
+        }
     </style>
     @stack('styles')
 </head>
@@ -457,11 +486,9 @@
         <!-- Page content wrapper-->
         <div id="page-content-wrapper">
             <!-- Top navigation-->
-            <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom">
+            <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom py-3">
                 <div class="container-fluid">
-                    <button class="btn btn-link text-muted p-0 me-2" id="sidebarToggle">
-                        <i class="bi bi-list fs-4"></i>
-                    </button>
+
                     <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                         <span class="navbar-toggler-icon"></span>
                     </button>
