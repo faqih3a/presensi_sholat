@@ -65,3 +65,21 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/super-admin/asatidz/{asatidz}', [\App\Http\Controllers\AsatidzController::class, 'destroy'])->name('asatidz.destroy');
     });
 });
+
+// Fallback routes for storage files when symbolic link is broken
+Route::get('/storage/santri_fotos/{filename}', function ($filename) {
+    $path = storage_path('app/public/santri_fotos/' . $filename);
+    if (!file_exists($path)) {
+        abort(404);
+    }
+    return response()->file($path);
+});
+
+Route::get('/storage/avatars/{filename}', function ($filename) {
+    $path = storage_path('app/public/avatars/' . $filename);
+    if (!file_exists($path)) {
+        abort(404);
+    }
+    return response()->file($path);
+});
+

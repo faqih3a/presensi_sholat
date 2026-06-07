@@ -176,7 +176,7 @@
     <div class="col-xl-4 col-md-12">
         <div class="card card-stats h-100 p-3">
             <div class="card-body p-0 d-flex align-items-center gap-3">
-                @if($user->santri && $user->santri->foto_referensi && file_exists(public_path('storage/santri_fotos/' . $user->santri->foto_referensi)))
+                @if($user->santri && $user->santri->foto_referensi && \Illuminate\Support\Facades\Storage::disk('public')->exists('santri_fotos/' . $user->santri->foto_referensi))
                     <img src="{{ asset('storage/santri_fotos/' . $user->santri->foto_referensi) }}" alt="Foto Profil" class="rounded-circle shadow-sm" style="width: 60px; height: 60px; object-fit: cover; border: 3px solid #f8f9fa;">
                 @else
                     <div class="bg-success bg-opacity-10 text-success rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 60px; height: 60px; border: 3px solid #f8f9fa;">

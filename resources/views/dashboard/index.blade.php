@@ -241,7 +241,7 @@
                             <div class="avatar-group d-flex align-items-center">
                                 @foreach($izinTodayRecords->take(6) as $santriId => $records)
                                     @php $santri = $records->first()->santri; @endphp
-                                    @if($santri->foto_referensi && file_exists(public_path('storage/santri_fotos/' . $santri->foto_referensi)))
+                                    @if($santri->foto_referensi && \Illuminate\Support\Facades\Storage::disk('public')->exists('santri_fotos/' . $santri->foto_referensi))
                                         <img src="{{ asset('storage/santri_fotos/' . $santri->foto_referensi) }}" class="rounded-circle" title="{{ $santri->nama }}">
                                     @else
                                         <div class="avatar-placeholder bg-info text-white rounded-circle d-flex align-items-center justify-content-center" title="{{ $santri->nama }}">
@@ -318,7 +318,7 @@
                             <div class="avatar-group d-flex align-items-center">
                                 @foreach($alfaTodayRecords->take(6) as $santriId => $records)
                                     @php $santri = $records->first()->santri; @endphp
-                                    @if($santri->foto_referensi && file_exists(public_path('storage/santri_fotos/' . $santri->foto_referensi)))
+                                    @if($santri->foto_referensi && \Illuminate\Support\Facades\Storage::disk('public')->exists('santri_fotos/' . $santri->foto_referensi))
                                         <img src="{{ asset('storage/santri_fotos/' . $santri->foto_referensi) }}" class="rounded-circle" title="{{ $santri->nama }}">
                                     @else
                                         <div class="avatar-placeholder bg-danger text-white rounded-circle d-flex align-items-center justify-content-center" title="{{ $santri->nama }}">
@@ -575,7 +575,7 @@
                     @forelse($absentSantris as $santri)
                         <li class="list-group-item d-flex justify-content-between align-items-center py-3">
                             <div class="d-flex align-items-center gap-3">
-                                @if($santri->foto_referensi && file_exists(public_path('storage/santri_fotos/' . $santri->foto_referensi)))
+                                @if($santri->foto_referensi && \Illuminate\Support\Facades\Storage::disk('public')->exists('santri_fotos/' . $santri->foto_referensi))
                                     <img src="{{ asset('storage/santri_fotos/' . $santri->foto_referensi) }}" alt="Foto" class="rounded-circle object-fit-cover" style="width: 40px; height: 40px;">
                                 @else
                                     <div class="bg-light text-secondary rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">

@@ -518,9 +518,9 @@
                                     <a class="nav-link dropdown-toggle d-flex align-items-center gap-2 p-0" id="navbarDropdown" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                         @php
                                             $navAvatarUrl = null;
-                                            if(auth()->user()->role === 'santri' && auth()->user()->santri && auth()->user()->santri->foto_referensi && file_exists(public_path('storage/santri_fotos/' . auth()->user()->santri->foto_referensi))) {
+                                            if(auth()->user()->role === 'santri' && auth()->user()->santri && auth()->user()->santri->foto_referensi && \Illuminate\Support\Facades\Storage::disk('public')->exists('santri_fotos/' . auth()->user()->santri->foto_referensi)) {
                                                 $navAvatarUrl = asset('storage/santri_fotos/' . auth()->user()->santri->foto_referensi);
-                                            } elseif (auth()->user()->avatar && file_exists(public_path('storage/avatars/' . auth()->user()->avatar))) {
+                                            } elseif (auth()->user()->avatar && \Illuminate\Support\Facades\Storage::disk('public')->exists('avatars/' . auth()->user()->avatar)) {
                                                 $navAvatarUrl = asset('storage/avatars/' . auth()->user()->avatar);
                                             }
                                         @endphp

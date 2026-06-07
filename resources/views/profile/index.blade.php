@@ -175,9 +175,9 @@
                 <div class="profile-avatar-wrapper">
                     @php
                         $avatarUrl = null;
-                        if($user->role === 'santri' && $user->santri && $user->santri->foto_referensi && file_exists(public_path('storage/santri_fotos/' . $user->santri->foto_referensi))) {
+                        if($user->role === 'santri' && $user->santri && $user->santri->foto_referensi && \Illuminate\Support\Facades\Storage::disk('public')->exists('santri_fotos/' . $user->santri->foto_referensi)) {
                             $avatarUrl = asset('storage/santri_fotos/' . $user->santri->foto_referensi);
-                        } elseif ($user->avatar && file_exists(public_path('storage/avatars/' . $user->avatar))) {
+                        } elseif ($user->avatar && \Illuminate\Support\Facades\Storage::disk('public')->exists('avatars/' . $user->avatar)) {
                             $avatarUrl = asset('storage/avatars/' . $user->avatar);
                         }
                     @endphp
@@ -407,9 +407,9 @@
                                 // Revert preview to original state
                                 @php
                                     $origUrl = null;
-                                    if($user->role === 'santri' && $user->santri && $user->santri->foto_referensi && file_exists(public_path('storage/santri_fotos/' . $user->santri->foto_referensi))) {
+                                    if($user->role === 'santri' && $user->santri && $user->santri->foto_referensi && \Illuminate\Support\Facades\Storage::disk('public')->exists('santri_fotos/' . $user->santri->foto_referensi)) {
                                         $origUrl = asset('storage/santri_fotos/' . $user->santri->foto_referensi);
-                                    } elseif ($user->avatar && file_exists(public_path('storage/avatars/' . $user->avatar))) {
+                                    } elseif ($user->avatar && \Illuminate\Support\Facades\Storage::disk('public')->exists('avatars/' . $user->avatar)) {
                                         $origUrl = asset('storage/avatars/' . $user->avatar);
                                     }
                                 @endphp
