@@ -247,18 +247,6 @@
                                                             {{ implode(', ', $sholats) }}
                                                         @endif
                                                     </span>
-                                                    @if(!$isFullDay)
-                                                        @foreach($records as $rec)
-                                                            <div class="d-flex gap-1 ms-2">
-                                                                <button type="button" class="btn btn-xs btn-outline-info p-0 px-1" style="font-size: 0.6rem;" onclick="editStatus('{{ $santri->id }}', '{{ $rec->tanggal }}', '{{ $rec->waktu_sholat }}', '{{ $rec->status }}')" title="Edit {{ $rec->waktu_sholat }}">
-                                                                    <i class="bi bi-pencil"></i>
-                                                                </button>
-                                                                <button type="button" class="btn btn-xs btn-outline-danger p-0 px-1" style="font-size: 0.6rem;" onclick="deletePresensi('{{ $santri->id }}', '{{ $rec->tanggal }}', '{{ $rec->waktu_sholat }}')" title="Hapus {{ $rec->waktu_sholat }}">
-                                                                    <i class="bi bi-trash"></i>
-                                                                </button>
-                                                            </div>
-                                                        @endforeach
-                                                    @endif
                                                 </div>
                                             </div>
                                         </li>
@@ -331,16 +319,6 @@
                                                     <span class="badge bg-danger bg-opacity-10 text-danger x-small">
                                                         {{ implode(', ', $sholats) }}
                                                     </span>
-                                                    @foreach($records as $rec)
-                                                        <div class="d-flex gap-1 ms-2">
-                                                            <button type="button" class="btn btn-xs btn-outline-info p-0 px-1" style="font-size: 0.6rem;" onclick="editStatus('{{ $santri->id }}', '{{ $rec->tanggal }}', '{{ $rec->waktu_sholat }}', '{{ $rec->status }}')" title="Edit {{ $rec->waktu_sholat }}">
-                                                                <i class="bi bi-pencil"></i>
-                                                            </button>
-                                                            <button type="button" class="btn btn-xs btn-outline-danger p-0 px-1" style="font-size: 0.6rem;" onclick="deletePresensi('{{ $santri->id }}', '{{ $rec->tanggal }}', '{{ $rec->waktu_sholat }}')" title="Hapus {{ $rec->waktu_sholat }}">
-                                                                <i class="bi bi-trash"></i>
-                                                            </button>
-                                                        </div>
-                                                    @endforeach
                                                 </div>
                                             </div>
                                         </li>

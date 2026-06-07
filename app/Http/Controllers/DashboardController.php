@@ -174,8 +174,11 @@ class DashboardController extends Controller
             });
         }
         
-        $realRecords = $query->get();
-        $realRecordsGrouped = $realRecords->groupBy(['tanggal', 'santri_id', 'waktu_sholat']);
+        $realRecordsAll = (clone $query)->withTrashed()->get();
+        $realRecordsGrouped = $realRecordsAll->groupBy(['tanggal', 'santri_id', 'waktu_sholat']);
+        $realRecords = $realRecordsAll->filter(function($r) {
+            return !$r->trashed();
+        });
 
         // Synthesize missing records for the entire range
         $synthesized = collect();
@@ -264,8 +267,11 @@ class DashboardController extends Controller
             });
         }
         
-        $realRecords = $query->get();
-        $realRecordsGrouped = $realRecords->groupBy(['tanggal', 'santri_id', 'waktu_sholat']);
+        $realRecordsAll = (clone $query)->withTrashed()->get();
+        $realRecordsGrouped = $realRecordsAll->groupBy(['tanggal', 'santri_id', 'waktu_sholat']);
+        $realRecords = $realRecordsAll->filter(function($r) {
+            return !$r->trashed();
+        });
 
         // Synthesize missing records
         $synthesized = collect();
@@ -386,7 +392,8 @@ class DashboardController extends Controller
         foreach ($times as $sholat => $endTime) {
             if ($now->greaterThan($endTime)) {
                 // Cari santri yang TIDAK punya record presensi untuk sholat ini hari ini
-                $presentSantriIds = Presensi::where('tanggal', $today)
+                $presentSantriIds = Presensi::withTrashed()
+                                            ->where('tanggal', $today)
                                             ->where('waktu_sholat', $sholat)
                                             ->pluck('santri_id')
                                             ->toArray();
@@ -420,7 +427,8 @@ class DashboardController extends Controller
         $hasYesterdaySync = \Illuminate\Support\Facades\Cache::get('sync_alfa_' . $yesterday);
         if (!$hasYesterdaySync) {
             foreach ($mapping as $apiName => $sysName) {
-                $presentSantriIds = Presensi::where('tanggal', $yesterday)
+                $presentSantriIds = Presensi::withTrashed()
+                                            ->where('tanggal', $yesterday)
                                             ->where('waktu_sholat', $sysName)
                                             ->pluck('santri_id')
                                             ->toArray();

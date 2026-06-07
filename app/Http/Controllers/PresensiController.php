@@ -10,7 +10,7 @@ class PresensiController extends Controller
 {
     public function index()
     {
-        $now = Carbon::now();
+        $now = Carbon::now('Asia/Jakarta');
         $jadwal = $this->getJadwalSholat($now);
         $currentTime = $now->format('H:i');
         
@@ -37,7 +37,7 @@ class PresensiController extends Controller
             'waktu_sholat' => 'required|string|in:Subuh,Dzuhur,Ashar,Maghrib,Isya',
         ]);
 
-        $now = Carbon::now();
+        $now = Carbon::now('Asia/Jakarta');
         $currentTime = $now->format('H:i');
         $selectedWaktu = $request->waktu_sholat;
 
@@ -81,14 +81,18 @@ class PresensiController extends Controller
 
         $status = $hasIzin ? 'Izin' : 'Hadir';
 
-        $existingRecord = Presensi::where('santri_id', $request->santri_id)
+        $existingRecord = Presensi::withTrashed()
+            ->where('santri_id', $request->santri_id)
             ->where('waktu_sholat', $selectedWaktu)
             ->where('tanggal', $today)
             ->first();
 
         if ($existingRecord) {
-            // If it's already "Hadir", block duplicate
-            if ($existingRecord->status === 'Hadir') {
+            if ($existingRecord->trashed()) {
+                $existingRecord->restore();
+            }
+            // If it's already "Hadir" and not trashed, block duplicate
+            elseif ($existingRecord->status === 'Hadir') {
                 return response()->json([
                     'success' => false,
                     'message' => "Anda sudah melakukan presensi untuk sholat $selectedWaktu hari ini.",
@@ -132,14 +136,29 @@ class PresensiController extends Controller
             'status' => 'required|in:Hadir,Izin,Alfa',
         ]);
 
-        $presensi = Presensi::updateOrCreate([
+        $presensi = Presensi::withTrashed()->where([
             'santri_id' => $request->santri_id,
             'tanggal' => $request->tanggal,
             'waktu_sholat' => $request->waktu_sholat,
-        ], [
-            'status' => $request->status,
-            'waktu_hadir' => $request->status === 'Hadir' ? Carbon::now()->format('H:i') : null,
-        ]);
+        ])->first();
+
+        if ($presensi) {
+            if ($presensi->trashed()) {
+                $presensi->restore();
+            }
+            $presensi->update([
+                'status' => $request->status,
+                'waktu_hadir' => $request->status === 'Hadir' ? Carbon::now('Asia/Jakarta')->format('H:i') : null,
+            ]);
+        } else {
+            $presensi = Presensi::create([
+                'santri_id' => $request->santri_id,
+                'tanggal' => $request->tanggal,
+                'waktu_sholat' => $request->waktu_sholat,
+                'status' => $request->status,
+                'waktu_hadir' => $request->status === 'Hadir' ? Carbon::now('Asia/Jakarta')->format('H:i') : null,
+            ]);
+        }
 
         return redirect()->back()->with('success', 'Status kehadiran berhasil diperbarui.');
     }
@@ -211,11 +230,10 @@ class PresensiController extends Controller
             }
         };
 
-        // End time as per user request: Maghrib 10 mins, others 15 mins after entry
-        $getEnd = function($timeStr, $sholatName) {
+        // End time is 10 minutes after the prayer starts
+        $getEnd = function($timeStr) {
             try {
-                $minutes = ($sholatName === 'Maghrib') ? 10 : 15;
-                return Carbon::createFromFormat('H:i', $timeStr)->addMinutes($minutes)->format('H:i');
+                return Carbon::createFromFormat('H:i', $timeStr)->addMinutes(10)->format('H:i');
             } catch (\Exception $e) {
                 return $timeStr;
             }
@@ -227,11 +245,11 @@ class PresensiController extends Controller
         $maghribStart = $getStart($maghrib);
         $ishaStart = $getStart($isha);
 
-        $fajrEnd = $getEnd($fajr, 'Subuh');
-        $dhuhrEnd = $getEnd($dhuhr, 'Dzuhur');
-        $asrEnd = $getEnd($asr, 'Ashar');
-        $maghribEnd = $getEnd($maghrib, 'Maghrib');
-        $ishaEnd = $getEnd($isha, 'Isya');
+        $fajrEnd = $getEnd($fajr);
+        $dhuhrEnd = $getEnd($dhuhr);
+        $asrEnd = $getEnd($asr);
+        $maghribEnd = $getEnd($maghrib);
+        $ishaEnd = $getEnd($isha);
 
         switch ($sholat) {
             case 'Subuh':
@@ -243,7 +261,6 @@ class PresensiController extends Controller
             case 'Maghrib':
                 return $currentTime >= $maghribStart && $currentTime <= $maghribEnd;
             case 'Isya':
-                // For Isya, handle cross-day if necessary, but usually just +15 mins
                 return $currentTime >= $ishaStart && $currentTime <= $ishaEnd;
         }
 

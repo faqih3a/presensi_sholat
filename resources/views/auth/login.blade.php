@@ -6,71 +6,134 @@
 <style>
     .login-container {
         min-height: 100vh;
-        background-color: #fff;
+        background-color: #f8f9fa;
     }
     .login-card {
-        max-width: 450px;
+        max-width: 440px;
         width: 100%;
-        margin: 0 auto;
-    }
-    .text-success-gradient {
-        background: linear-gradient(310deg, #198754 0%, #2dc57b 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-    .form-control {
+        background: #ffffff;
+        border-radius: 1.5rem;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+        padding: 2.5rem 2.25rem;
         border: 1px solid #edf2f9;
-        border-radius: 0.75rem;
-        padding: 0.75rem 1rem;
-        transition: all 0.2s;
     }
-    .form-control:focus {
-        border-color: #198754;
-        box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.1);
-    }
-    .btn-gradient-success {
-        background: linear-gradient(310deg, #198754 0%, #2dc57b 100%);
-        border: none;
-        border-radius: 0.75rem;
-        color: #fff;
-        font-weight: 600;
-        transition: all 0.2s;
-        box-shadow: 0 4px 7px -1px rgba(0,0,0,0.11), 0 2px 4px -1px rgba(0,0,0,0.07);
-    }
-    .btn-gradient-success:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 7px 14px rgba(0,0,0,0.1), 0 3px 6px rgba(0,0,0,0.08);
-        color: #fff;
-    }
-    .btn-outline-soft {
-        border: 1px solid #edf2f9;
-        border-radius: 0.75rem;
-        color: #67748e;
-        font-weight: 600;
-        transition: all 0.2s;
-    }
-    .btn-outline-soft:hover {
+    
+    /* Custom Input Group styling to match mockup exactly */
+    .custom-input-group {
         background-color: #f8f9fa;
-        color: #198754;
-        border-color: #198754;
+        border: 1px solid #edf2f9;
+        border-radius: 0.75rem;
+        overflow: hidden;
+        transition: all 0.2s ease-in-out;
     }
+    .custom-input-group:focus-within {
+        border-color: #10b981;
+        background-color: #ffffff;
+        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+    }
+    .custom-input-group .input-group-text {
+        background-color: transparent;
+        border: none;
+        color: #9ca3af;
+        padding-left: 1.25rem;
+        padding-right: 0.5rem;
+        font-size: 1.1rem;
+    }
+    .custom-input-group .form-control {
+        background-color: transparent;
+        border: none;
+        padding: 0.75rem 1rem 0.75rem 0.5rem;
+        font-size: 0.9rem;
+        color: #1f2937;
+    }
+    .custom-input-group .form-control:focus {
+        box-shadow: none;
+        background-color: transparent;
+    }
+    .custom-input-group .form-control::placeholder {
+        color: #9ca3af;
+        opacity: 1;
+    }
+    
+    /* Buttons styling */
+    .btn-primary-custom {
+        background-color: #10b981;
+        border: none;
+        color: #ffffff;
+        font-weight: 600;
+        border-radius: 0.75rem;
+        padding: 0.75rem 1.25rem;
+        transition: all 0.2s;
+        font-size: 0.95rem;
+    }
+    .btn-primary-custom:hover {
+        background-color: #059669;
+        color: #ffffff;
+    }
+    
+    .btn-outline-custom {
+        background-color: #ffffff;
+        border: 1px solid #e5e7eb;
+        color: #2563eb; /* Blue text */
+        font-weight: 600;
+        border-radius: 0.75rem;
+        padding: 0.75rem 1.25rem;
+        transition: all 0.2s;
+        font-size: 0.95rem;
+        text-decoration: none;
+        display: inline-block;
+        text-align: center;
+    }
+    .btn-outline-custom:hover {
+        background-color: #f9fafb;
+        border-color: #d1d5db;
+        color: #1d4ed8;
+    }
+    
+    /* Right visual panel */
     .right-panel {
-        background: linear-gradient(rgba(25, 135, 84, 0.7), rgba(25, 135, 84, 0.8)), url('{{ asset('images/bg-thursina.png') }}');
+        position: relative;
+        background-image: url('{{ asset('images/bg-thursina.png') }}');
         background-size: cover;
         background-position: center;
         display: flex;
         align-items: center;
         justify-content: center;
-        text-align: center;
         color: #fff;
         padding: 3rem;
     }
+    .right-panel::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.75) 0%, rgba(4, 120, 87, 0.85) 100%);
+        z-index: 1;
+    }
     .glass-effect {
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        position: relative;
+        z-index: 2;
+        background: rgba(255, 255, 255, 0.12);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.25);
         border-radius: 1.5rem;
-        padding: 3rem;
+        padding: 3.5rem 2.5rem;
+        width: 100%;
+        max-width: 560px;
+        text-align: center;
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.08);
+    }
+    
+    /* Custom Checkbox */
+    .custom-checkbox {
+        cursor: pointer;
+    }
+    .custom-checkbox:checked {
+        background-color: #10b981;
+        border-color: #10b981;
     }
 </style>
 @endpush
@@ -79,14 +142,14 @@
 <div class="container-fluid p-0 overflow-hidden">
     <div class="row g-0 login-container">
         <!-- Left Panel: Form -->
-        <div class="col-lg-5 d-flex flex-column justify-content-center px-4 py-5 bg-white">
+        <div class="col-lg-6 d-flex flex-column justify-content-center align-items-center px-4 py-5" style="background-color: #f8f9fa;">
             <div class="login-card">
-                <div class="text-center mb-5">
-                    <div class="bg-success bg-opacity-10 d-inline-flex align-items-center justify-content-center rounded-circle mb-3" style="width: 64px; height: 64px;">
-                        <i class="bi bi-shield-check fs-1 text-success"></i>
+                <div class="text-center mb-4">
+                    <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3" style="width: 56px; height: 56px; background-color: #e6f7ef;">
+                        <i class="bi bi-shield-check fs-2" style="color: #10b981;"></i>
                     </div>
-                    <h2 class="fw-800 text-dark mb-1" style="letter-spacing: -1px;">PRESENSI THURSINA</h2>
-                    <p class="text-muted">Masuk untuk mengelola kehadiran santri.</p>
+                    <h3 class="fw-bold text-dark mb-1" style="letter-spacing: -0.5px;">PRESENSI THURSINA</h3>
+                    <p class="text-muted small mb-0">Masuk untuk mengelola kehadiran santri.</p>
                 </div>
 
                 @if (session('error'))
@@ -117,23 +180,23 @@
                 <form action="{{ route('login') }}" method="POST">
                     @csrf
                     <div class="mb-3">
-                        <label class="form-label small fw-bold text-muted text-uppercase">Email Address</label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-light border-0 ps-3 pe-2 text-muted" style="border-radius: 0.75rem 0 0 0.75rem;">
+                        <label class="form-label mb-1" style="font-size: 0.75rem; font-weight: 700; color: #6b7280; letter-spacing: 0.5px;">EMAIL ADDRESS</label>
+                        <div class="input-group custom-input-group">
+                            <span class="input-group-text">
                                 <i class="bi bi-envelope"></i>
                             </span>
-                            <input type="email" class="form-control border-0 bg-light py-2" style="border-radius: 0 0.75rem 0.75rem 0;" name="email" placeholder="Masukkan Email Anda" required autofocus>
+                            <input type="email" class="form-control" name="email" placeholder="Masukkan Email Anda" required autofocus>
                         </div>
                     </div>
                     
                     <div class="mb-3">
-                        <label class="form-label small fw-bold text-muted text-uppercase">Password</label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-light border-0 ps-3 pe-2 text-muted" style="border-radius: 0.75rem 0 0 0.75rem;">
+                        <label class="form-label mb-1" style="font-size: 0.75rem; font-weight: 700; color: #6b7280; letter-spacing: 0.5px;">PASSWORD</label>
+                        <div class="input-group custom-input-group">
+                            <span class="input-group-text">
                                 <i class="bi bi-lock"></i>
                             </span>
-                            <input type="password" class="form-control border-0 bg-light py-2" style="border-radius: 0;" id="password" name="password" placeholder="Masukkan Password Anda" required>
-                            <span class="input-group-text bg-light border-0 pe-3 ps-2 text-muted" id="togglePassword" style="cursor: pointer; border-radius: 0 0.75rem 0.75rem 0;">
+                            <input type="password" class="form-control" id="password" name="password" placeholder="Masukkan Password Anda" required>
+                            <span class="input-group-text" id="togglePassword" style="cursor: pointer;">
                                 <i class="bi bi-eye-slash"></i>
                             </span>
                         </div>
@@ -141,47 +204,45 @@
                     
                     <div class="d-flex justify-content-between align-items-center mb-4">
                         <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="rememberMe" style="cursor: pointer;">
-                            <label class="form-check-label text-muted small" for="rememberMe" style="cursor: pointer;">Ingat Saya</label>
+                            <input class="form-check-input custom-checkbox" type="checkbox" name="remember" id="rememberMe">
+                            <label class="form-check-label text-muted" for="rememberMe" style="font-size: 0.85rem; cursor: pointer;">Ingat Saya</label>
                         </div>
-                        <a href="#" class="text-success small fw-bold text-decoration-none">Lupa Password?</a>
+                        <a href="#" class="small fw-semibold text-decoration-none" style="color: #10b981;">Lupa Password?</a>
                     </div>
                     
                     <div class="d-grid gap-3">
-                        <button type="submit" class="btn btn-gradient-success py-2 fs-6">Masuk Ke Sistem</button>
+                        <button type="submit" class="btn btn-primary-custom py-2">Masuk Ke Sistem</button>
                         <div class="text-center position-relative my-2">
                             <hr class="text-muted opacity-25">
-                            <span class="position-absolute top-50 start-50 translate-middle bg-white px-3 text-muted small">ATAU</span>
+                            <span class="position-absolute top-50 start-50 translate-middle bg-white px-3 text-muted" style="font-size: 0.75rem; font-weight: 600;">ATAU</span>
                         </div>
-                        <a href="{{ route('santri.create') }}" class="btn btn-outline-soft py-2 fs-6">Daftar Akun Santri</a>
+                        <a href="{{ route('santri.create') }}" class="btn btn-outline-custom py-2">Daftar Akun Santri</a>
                     </div>
                 </form>
-
-                <div class="mt-5 text-center">
-                    <p class="text-muted small mb-0">© 2026 Thursina IIBS. All rights reserved.</p>
-                </div>
             </div>
+            
+            <p class="text-muted text-center mt-4 mb-0" style="font-size: 0.8rem;">&copy; 2026 Thursina IIBS. All rights reserved.</p>
         </div>
         
         <!-- Right Panel: Visual -->
-        <div class="col-lg-7 d-none d-lg-flex right-panel">
+        <div class="col-lg-6 d-none d-lg-flex right-panel">
             <div class="glass-effect">
-                <h1 class="display-4 fw-800 mb-3" style="letter-spacing: -2px;">Digital Attendance System</h1>
-                <p class="lead mb-4 opacity-75">Sistem presensi berbasis AI Face Recognition untuk kemudahan pemantauan ibadah santri di lingkungan Thursina IIBS.</p>
+                <h1 class="display-5 fw-bold mb-3" style="letter-spacing: -1.5px;">Digital Attendance System</h1>
+                <p class="lead mb-5 opacity-90" style="font-size: 1rem; line-height: 1.6;">Sistem presensi berbasis AI Face Recognition untuk kemudahan pemantauan ibadah santri di lingkungan Thursina IIBS.</p>
                 <div class="d-flex justify-content-center gap-4 mt-2">
-                    <div class="text-center">
-                        <h4 class="fw-bold mb-0">100%</h4>
-                        <p class="small opacity-50 mb-0">Accurate</p>
+                    <div class="text-center px-3">
+                        <h3 class="fw-bold mb-0">100%</h3>
+                        <p class="small opacity-75 mb-0" style="font-size: 0.8rem;">Accurate</p>
                     </div>
                     <div class="border-start opacity-25"></div>
-                    <div class="text-center">
-                        <h4 class="fw-bold mb-0">AI</h4>
-                        <p class="small opacity-50 mb-0">Powered</p>
+                    <div class="text-center px-3">
+                        <h3 class="fw-bold mb-0">AI</h3>
+                        <p class="small opacity-75 mb-0" style="font-size: 0.8rem;">Powered</p>
                     </div>
                     <div class="border-start opacity-25"></div>
-                    <div class="text-center">
-                        <h4 class="fw-bold mb-0">Live</h4>
-                        <p class="small opacity-50 mb-0">Reports</p>
+                    <div class="text-center px-3">
+                        <h3 class="fw-bold mb-0">Live</h3>
+                        <p class="small opacity-75 mb-0" style="font-size: 0.8rem;">Reports</p>
                     </div>
                 </div>
             </div>

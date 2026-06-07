@@ -147,14 +147,21 @@ class SantriDashboardController extends Controller
 
         foreach ($times as $sholat => $endTime) {
             if ($now->greaterThan($endTime)) {
-                Presensi::firstOrCreate([
-                    'santri_id' => $santriId,
-                    'tanggal' => $today,
-                    'waktu_sholat' => $sholat,
-                ], [
-                    'status' => 'Alfa',
-                    'waktu_hadir' => null
-                ]);
+                $exists = Presensi::withTrashed()
+                    ->where('santri_id', $santriId)
+                    ->where('tanggal', $today)
+                    ->where('waktu_sholat', $sholat)
+                    ->exists();
+
+                if (!$exists) {
+                    Presensi::create([
+                        'santri_id' => $santriId,
+                        'tanggal' => $today,
+                        'waktu_sholat' => $sholat,
+                        'status' => 'Alfa',
+                        'waktu_hadir' => null
+                    ]);
+                }
             }
         }
         
@@ -163,14 +170,21 @@ class SantriDashboardController extends Controller
         $cacheKey = 'sync_alfa_' . $yesterday . '_santri_' . $santriId;
         if (!\Illuminate\Support\Facades\Cache::get($cacheKey)) {
             foreach ($mapping as $apiName => $sysName) {
-                Presensi::firstOrCreate([
-                    'santri_id' => $santriId,
-                    'tanggal' => $yesterday,
-                    'waktu_sholat' => $sysName,
-                ], [
-                    'status' => 'Alfa',
-                    'waktu_hadir' => null
-                ]);
+                $exists = Presensi::withTrashed()
+                    ->where('santri_id', $santriId)
+                    ->where('tanggal', $yesterday)
+                    ->where('waktu_sholat', $sysName)
+                    ->exists();
+
+                if (!$exists) {
+                    Presensi::create([
+                        'santri_id' => $santriId,
+                        'tanggal' => $yesterday,
+                        'waktu_sholat' => $sysName,
+                        'status' => 'Alfa',
+                        'waktu_hadir' => null
+                    ]);
+                }
             }
             \Illuminate\Support\Facades\Cache::put($cacheKey, true, 86400);
         }

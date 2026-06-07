@@ -154,6 +154,14 @@
             }
         };
 
+        $getEnd = function($timeStr) {
+            try {
+                return \Carbon\Carbon::createFromFormat('H:i', $timeStr)->addMinutes(10)->format('H:i');
+            } catch (\Exception $e) {
+                return $timeStr;
+            }
+        };
+
         $apiTimes = [
             'Subuh' => $jadwal['Fajr'],
             'Dzuhur' => $jadwal['Dhuhr'],
@@ -164,13 +172,7 @@
 
         foreach ($sholatList as $sholat) {
             $start = $getStart($apiTimes[$sholat]);
-            $end = match($sholat) {
-                'Subuh' => $apiTimes['Dzuhur'],
-                'Dzuhur' => $apiTimes['Ashar'],
-                'Ashar' => $apiTimes['Maghrib'],
-                'Maghrib' => $apiTimes['Isya'],
-                'Isya' => $getStart($apiTimes['Subuh']), // Ends 30 mins before next Subuh
-            };
+            $end = $getEnd($apiTimes[$sholat]);
             $jadwalInfo[$sholat] = ['start' => $start, 'end' => $end];
         }
     }
@@ -311,7 +313,7 @@
         }
     });
 
-    btnBatal.addEventListener('click', () => {
+    function stopCameraAndReturn() {
         // Hentikan kamera
         if (video.srcObject) {
             video.srcObject.getTracks().forEach(track => track.stop());
@@ -334,7 +336,9 @@
         statusTitle.className = 'text-success fw-bold mb-2';
         statusTitle.innerHTML = '<i class="bi bi-check-circle-fill me-2"></i>Sistem Aktif';
         statusDesc.textContent = 'Silakan pilih waktu sholat dan mulai presensi.';
-    });
+    }
+
+    btnBatal.addEventListener('click', stopCameraAndReturn);
 
     async function loadDataAndModels() {
         try {
@@ -369,7 +373,7 @@
                 );
             });
 
-            faceMatcher = new faceapi.FaceMatcher(labeledFaceDescriptors, 0.6); // Threshold 0.6
+            faceMatcher = new faceapi.FaceMatcher(labeledFaceDescriptors, 0.45); // Threshold 0.45 for stricter matching
 
             statusTitle.className = 'text-success fw-bold mb-2';
             statusTitle.innerHTML = '<i class="bi bi-check-circle-fill me-2"></i>Sistem Aktif';
@@ -430,6 +434,11 @@
         }
         cooldowns.set(santriId, Date.now());
 
+        // Stop scanning immediately to prevent sending more requests while this is processing
+        if (scanInterval) {
+            clearInterval(scanInterval);
+        }
+
         try {
             const response = await fetch('{{ route("presensi.store") }}', {
                 method: 'POST',
@@ -453,8 +462,13 @@
                 showNotification('Gagal', result.message, 'danger');
             }
 
+            // Immediately stop camera and return to selector page
+            stopCameraAndReturn();
+
         } catch (error) {
             console.error(error);
+            showNotification('Error', 'Terjadi kesalahan sistem.', 'danger');
+            stopCameraAndReturn();
         }
     }
 
@@ -471,15 +485,15 @@
         scanInterval = setInterval(async () => {
             if(!faceMatcher) return;
 
-            const detections = await faceapi.detectAllFaces(video).withFaceLandmarks().withFaceDescriptors();
-            const resizedDetections = faceapi.resizeResults(detections, displaySize);
+            const detection = await faceapi.detectSingleFace(video).withFaceLandmarks().withFaceDescriptor();
             
             canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
             
-            const results = resizedDetections.map(d => faceMatcher.findBestMatch(d.descriptor));
-
-            results.forEach((result, i) => {
-                const box = resizedDetections[i].detection.box;
+            if (detection) {
+                const resizedDetection = faceapi.resizeResults(detection, displaySize);
+                const result = faceMatcher.findBestMatch(resizedDetection.descriptor);
+                
+                const box = resizedDetection.detection.box;
                 const drawBox = new faceapi.draw.DrawBox(box, { 
                     label: result.label === 'unknown' ? 'Tidak Dikenal' : 'Mencocokkan...',
                     boxColor: result.label === 'unknown' ? '#ef4444' : '#198754'
@@ -489,9 +503,9 @@
                 if (result.label !== 'unknown') {
                     catatPresensi(result.label);
                 }
-            });
+            }
 
-        }, 500); // Scan tiap 500ms
+        }, 400); // Scan tiap 400ms
     });
 
     // Jangan mulai secara otomatis saat load
