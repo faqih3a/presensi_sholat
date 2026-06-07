@@ -145,7 +145,7 @@
                                 <span class="text-muted fw-bold small">{{ $index + 1 }}</span>
                             </td>
                             <td>
-                                @if($santri->foto_referensi)
+                                @if($santri->foto_referensi && file_exists(public_path('storage/santri_fotos/' . $santri->foto_referensi)))
                                     <img src="{{ asset('storage/santri_fotos/' . $santri->foto_referensi) }}" alt="{{ $santri->nama }}" class="avatar-sm rounded-circle object-fit-cover">
                                 @else
                                     <div class="avatar-sm bg-light text-secondary rounded-circle d-flex align-items-center justify-content-center border">

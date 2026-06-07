@@ -132,7 +132,7 @@
 
                     <div class="mb-4">
                         <div class="preview-container shadow-sm" id="preview-wrapper">
-                            @if($santri->foto_referensi)
+                            @if($santri->foto_referensi && file_exists(public_path('storage/santri_fotos/' . $santri->foto_referensi)))
                                 <img id="image-preview" src="{{ asset('storage/santri_fotos/' . $santri->foto_referensi) }}" alt="Foto Saat Ini" />
                             @else
                                 <img id="image-preview" src="#" alt="Preview" style="display: none;" />
