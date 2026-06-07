@@ -493,24 +493,26 @@
         <!-- Page content wrapper-->
         <div id="page-content-wrapper">
             <!-- Top navigation-->
-            <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom py-3">
-                <div class="container-fluid">
-
-                    <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                        <span class="navbar-toggler-icon"></span>
+            <nav class="navbar navbar-light bg-white border-bottom py-3">
+                <div class="container-fluid px-3 d-flex align-items-center">
+                    <!-- Sidebar Toggle Button (Visible on all screens) -->
+                    <button class="btn btn-light border-0 shadow-none" id="sidebarToggle" type="button">
+                        <i class="bi bi-list fs-4"></i>
                     </button>
-                    <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                        <!-- Search Bar -->
-                        <form action="{{ route('dashboard.kehadiran') }}" method="GET" class="ms-md-3 me-auto d-none d-md-block no-loader" style="width: 250px;">
-                            <div class="input-group input-group-sm bg-light rounded-3 border-0">
-                                <span class="input-group-text bg-transparent border-0 text-muted ps-3">
-                                    <i class="bi bi-search"></i>
-                                </span>
-                                <input type="text" name="search" class="form-control bg-transparent border-0 ps-1" placeholder="Cari santri..." aria-label="Search" value="{{ request('search') }}">
-                            </div>
-                        </form>
 
-                        <ul class="navbar-nav ms-auto mt-2 mt-lg-0 align-items-center">
+                    <!-- Search Bar (Desktop Only) -->
+                    <form action="{{ route('dashboard.kehadiran') }}" method="GET" class="ms-md-3 me-auto d-none d-md-block no-loader" style="width: 250px;">
+                        <div class="input-group input-group-sm bg-light rounded-3 border-0">
+                            <span class="input-group-text bg-transparent border-0 text-muted ps-3">
+                                <i class="bi bi-search"></i>
+                            </span>
+                            <input type="text" name="search" class="form-control bg-transparent border-0 ps-1" placeholder="Cari santri..." aria-label="Search" value="{{ request('search') }}">
+                        </div>
+                    </form>
+
+                    <!-- Profile Menu (Always visible on the right) -->
+                    <div class="ms-auto">
+                        <ul class="navbar-nav align-items-center">
                             @auth
                                 <li class="nav-item dropdown">
                                     <a class="nav-link dropdown-toggle d-flex align-items-center gap-2 p-0" id="navbarDropdown" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
