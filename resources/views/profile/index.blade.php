@@ -182,13 +182,10 @@
                         }
                     @endphp
                     
-                    @if($avatarUrl)
-                        <img src="{{ $avatarUrl }}" alt="Avatar" class="profile-avatar-img" id="avatarPreview">
-                    @else
-                        <div class="profile-avatar-img d-flex align-items-center justify-content-center bg-success text-white fs-1 fw-bold">
-                            {{ substr($user->name, 0, 1) }}
-                        </div>
-                    @endif
+                    <img src="{{ $avatarUrl ?? '' }}" alt="Avatar" class="profile-avatar-img {{ !$avatarUrl ? 'd-none' : '' }}" id="avatarPreview">
+                    <div id="avatarFallback" class="profile-avatar-img d-flex align-items-center justify-content-center bg-success text-white fs-1 fw-bold {{ $avatarUrl ? 'd-none' : '' }}">
+                        {{ substr($user->name, 0, 1) }}
+                    </div>
                     
                     <label for="avatarInput" class="avatar-edit-btn" title="Ganti Foto">
                         <i class="bi bi-camera-fill"></i>
@@ -201,6 +198,11 @@
                             {{ strtoupper($user->role) }}
                         </span>
                     </p>
+                    @if($user->role === 'santri')
+                        <div id="face-status-container" class="mt-2 small d-none" style="max-width: 250px;">
+                            <span id="face-status-text" class="fw-semibold text-muted"></span>
+                        </div>
+                    @endif
                 </div>
             </div>
 
@@ -225,6 +227,9 @@
                             @csrf
                             @method('PUT')
                             <input type="file" name="avatar" id="avatarInput" class="d-none" accept="image/*">
+                            @if($user->role === 'santri')
+                                <input type="hidden" name="face_descriptor" id="faceDescriptorInput">
+                            @endif
                             
                             <div class="row g-4">
                                 <div class="col-md-6">
@@ -313,21 +318,116 @@
 </div>
 
 @push('scripts')
+@if($user->role === 'santri')
+<script src="{{ asset('js/face-api.min.js') }}"></script>
+@endif
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Handle Avatar Preview
+        // Handle Avatar Preview & Face Recognition
         const avatarInput = document.getElementById('avatarInput');
         const avatarPreview = document.getElementById('avatarPreview');
+        const avatarFallback = document.getElementById('avatarFallback');
+        const faceDescriptorInput = document.getElementById('faceDescriptorInput');
+        const faceStatusContainer = document.getElementById('face-status-container');
+        const faceStatusText = document.getElementById('face-status-text');
+        const submitBtn = document.querySelector('button[type="submit"]');
+        let isModelLoaded = false;
+
+        async function loadModels() {
+            if (isModelLoaded) return;
+            try {
+                faceStatusContainer.classList.remove('d-none');
+                faceStatusText.innerHTML = '<span class="spinner-border spinner-border-sm text-success me-1"></span> Memuat AI Wajah...';
+                
+                await Promise.all([
+                    faceapi.nets.tinyFaceDetector.loadFromUri('/models'),
+                    faceapi.nets.faceLandmark68Net.loadFromUri('/models'),
+                    faceapi.nets.faceRecognitionNet.loadFromUri('/models')
+                ]);
+                isModelLoaded = true;
+                faceStatusContainer.classList.add('d-none');
+            } catch (error) {
+                console.error('Error loading models:', error);
+                faceStatusText.innerHTML = '<i class="bi bi-exclamation-triangle-fill text-danger me-1"></i> Gagal memuat AI Model.';
+            }
+        }
         
         if (avatarInput && avatarPreview) {
-            avatarInput.addEventListener('change', function() {
+            avatarInput.addEventListener('change', async function() {
                 const file = this.files[0];
                 if (file) {
+                    // Update preview
                     const reader = new FileReader();
                     reader.onload = function(e) {
                         avatarPreview.src = e.target.result;
+                        avatarPreview.classList.remove('d-none');
+                        if (avatarFallback) avatarFallback.classList.add('d-none');
                     }
                     reader.readAsDataURL(file);
+
+                    // Process face detection if user is santri
+                    if (faceDescriptorInput) {
+                        submitBtn.disabled = true; // Disable until processed
+                        await loadModels();
+
+                        faceStatusContainer.classList.remove('d-none');
+                        faceStatusText.innerHTML = '<span class="spinner-border spinner-border-sm text-success me-1"></span> Memproses wajah...';
+                        faceStatusText.className = 'fw-semibold text-muted';
+
+                        // Create temporary image element for face-api
+                        const img = new Image();
+                        img.src = URL.createObjectURL(file);
+                        img.onload = async () => {
+                            try {
+                                const detection = await faceapi.detectSingleFace(
+                                    img, 
+                                    new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 })
+                                ).withFaceLandmarks().withFaceDescriptor();
+
+                                if (!detection) {
+                                    throw new Error('Wajah tidak terdeteksi. Silakan pilih foto wajah yang lebih jelas.');
+                                }
+
+                                const descriptorArray = Array.from(detection.descriptor);
+                                faceDescriptorInput.value = JSON.stringify(descriptorArray);
+
+                                faceStatusText.innerHTML = '<i class="bi bi-check-circle-fill text-success me-1"></i> Wajah terdeteksi! Siap disimpan.';
+                                faceStatusText.className = 'fw-bold text-success';
+                                submitBtn.disabled = false;
+                            } catch (err) {
+                                console.error(err);
+                                faceStatusText.innerHTML = `<i class="bi bi-exclamation-triangle-fill text-danger me-1"></i> ${err.message}`;
+                                faceStatusText.className = 'fw-bold text-danger';
+                                
+                                // Reset state
+                                faceDescriptorInput.value = '';
+                                avatarInput.value = '';
+                                submitBtn.disabled = false; // Re-enable so they can save other profile details
+
+                                // Revert preview to original state
+                                @php
+                                    $origUrl = null;
+                                    if($user->role === 'santri' && $user->santri && $user->santri->foto_referensi) {
+                                        $origUrl = asset('storage/santri_fotos/' . $user->santri->foto_referensi);
+                                    } elseif ($user->avatar) {
+                                        $origUrl = asset('storage/avatars/' . $user->avatar);
+                                    }
+                                @endphp
+
+                                @if($origUrl)
+                                    avatarPreview.src = "{{ $origUrl }}";
+                                    avatarPreview.classList.remove('d-none');
+                                    if (avatarFallback) avatarFallback.classList.add('d-none');
+                                @else
+                                    avatarPreview.src = "";
+                                    avatarPreview.classList.add('d-none');
+                                    if (avatarFallback) avatarFallback.classList.remove('d-none');
+                                @endif
+                            } finally {
+                                URL.revokeObjectURL(img.src);
+                            }
+                        };
+                    }
                 }
             });
         }

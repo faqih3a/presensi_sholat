@@ -38,12 +38,30 @@ class ProfileController extends Controller
             $filename = time() . '_' . $user->id . '.' . $file->getClientOriginalExtension();
             
             if ($user->role === 'santri') {
-                $file->move(public_path('storage/santri_fotos'), $filename);
+                $request->validate([
+                    'face_descriptor' => 'required|string',
+                ], [
+                    'face_descriptor.required' => 'Wajah pada foto tidak terdeteksi atau sistem sedang memproses.',
+                ]);
+
+                // Hapus foto lama jika ada
+                if ($user->santri && $user->santri->foto_referensi) {
+                    \Illuminate\Support\Facades\Storage::disk('public')->delete('santri_fotos/' . $user->santri->foto_referensi);
+                }
+
+                $file->storeAs('santri_fotos', $filename, 'public');
                 if ($user->santri) {
-                    $user->santri->update(['foto_referensi' => $filename]);
+                    $user->santri->update([
+                        'foto_referensi' => $filename,
+                        'face_descriptor' => $request->face_descriptor,
+                    ]);
                 }
             } else {
-                $file->move(public_path('storage/avatars'), $filename);
+                // Hapus avatar lama jika ada
+                if ($user->avatar) {
+                    \Illuminate\Support\Facades\Storage::disk('public')->delete('avatars/' . $user->avatar);
+                }
+                $file->storeAs('avatars', $filename, 'public');
                 $userData['avatar'] = $filename;
             }
         }
