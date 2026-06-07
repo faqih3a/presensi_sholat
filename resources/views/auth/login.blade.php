@@ -9,12 +9,12 @@
         background-color: #f8f9fa;
     }
     .login-card {
-        max-width: 440px;
+        max-width: 480px;
         width: 100%;
         background: #ffffff;
         border-radius: 1.5rem;
         box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
-        padding: 2.5rem 2.25rem;
+        padding: 3rem 2.5rem;
         border: 1px solid #edf2f9;
     }
     
@@ -55,9 +55,8 @@
         opacity: 1;
     }
     
-    /* Buttons styling */
     .btn-primary-custom {
-        background-color: #10b981;
+        background-color: #198754;
         border: none;
         color: #ffffff;
         font-weight: 600;
@@ -67,14 +66,14 @@
         font-size: 0.95rem;
     }
     .btn-primary-custom:hover {
-        background-color: #059669;
+        background-color: #157347;
         color: #ffffff;
     }
     
     .btn-outline-custom {
-        background-color: transparent;
-        border: 1px solid #10b981;
-        color: #10b981;
+        background-color: #ffffff;
+        border: 1px solid #e5e7eb;
+        color: #198754; /* Aligned green text */
         font-weight: 600;
         border-radius: 0.75rem;
         padding: 0.75rem 1.25rem;
@@ -85,9 +84,9 @@
         text-align: center;
     }
     .btn-outline-custom:hover {
-        background-color: rgba(16, 185, 129, 0.05);
-        border-color: #10b981;
-        color: #059669;
+        background-color: #f9fafb;
+        border-color: #d1d5db;
+        color: #157347;
     }
     
     /* Right visual panel */
@@ -132,8 +131,8 @@
         cursor: pointer;
     }
     .custom-checkbox:checked {
-        background-color: #10b981;
-        border-color: #10b981;
+        background-color: #198754;
+        border-color: #198754;
     }
 </style>
 @endpush
@@ -146,7 +145,7 @@
             <div class="login-card">
                 <div class="text-center mb-4">
                     <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3" style="width: 56px; height: 56px; background-color: #e6f7ef;">
-                        <i class="bi bi-shield-check fs-2" style="color: #10b981;"></i>
+                        <i class="bi bi-shield-check fs-2" style="color: #198754;"></i>
                     </div>
                     <h3 class="fw-bold text-dark mb-1" style="letter-spacing: -0.5px;">PRESENSI THURSINA</h3>
                     <p class="text-muted small mb-0">Masuk untuk mengelola kehadiran santri.</p>
@@ -207,7 +206,7 @@
                             <input class="form-check-input custom-checkbox" type="checkbox" name="remember" id="rememberMe">
                             <label class="form-check-label text-muted" for="rememberMe" style="font-size: 0.85rem; cursor: pointer;">Ingat Saya</label>
                         </div>
-                        <a href="#" class="small fw-semibold text-decoration-none" style="color: #10b981;">Lupa Password?</a>
+                        <a href="#" class="small fw-semibold text-decoration-none" style="color: #198754;">Lupa Password?</a>
                     </div>
                     
                     <div class="d-grid gap-3">

@@ -463,8 +463,8 @@
                             <span class="sidebar-text">Presensi Saya</span>
                         </a>
                         <a class="list-group-item list-group-item-action {{ request()->is('scan') ? 'active' : '' }}" href="/scan">
-                            <i class="bi bi-qr-code-scan"></i>
-                            <span class="sidebar-text">Scan Kehadiran</span>
+                            <i class="bi bi-camera-fill"></i>
+                            <span class="sidebar-text">Presensi</span>
                         </a>
                         <a class="list-group-item list-group-item-action {{ request()->is('izin') ? 'active' : '' }}" href="{{ route('izin.index') }}">
                             <i class="bi bi-file-earmark-text-fill"></i>

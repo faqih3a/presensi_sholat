@@ -472,32 +472,23 @@
             <div class="card-body p-0">
                 <h5 class="card-title fw-bold text-dark mb-4">Aktivitas Terbaru</h5>
                 
-                <div class="d-flex mb-4">
+                @forelse($latestActivities as $index => $act)
+                <div class="d-flex {{ $index < count($latestActivities) - 1 ? 'mb-4' : '' }}">
                     <div class="mt-1"><span class="activity-indicator"></span></div>
                     <div>
-                        <div class="fw-semibold text-dark">Santri baru didaftarkan</div>
-                        <div class="small text-muted">Ahmad dari Kelas 10A</div>
-                        <div class="small text-black-50">2 jam yang lalu</div>
+                        <div class="fw-semibold text-dark">{{ $act['title'] }}</div>
+                        <div class="small text-muted">{{ $act['subtitle'] }}</div>
+                        <div class="small text-black-50">
+                            {{ $act['time'] instanceof \Carbon\Carbon ? $act['time']->diffForHumans() : \Carbon\Carbon::parse($act['time'])->diffForHumans() }}
+                        </div>
                     </div>
                 </div>
-
-                <div class="d-flex mb-4">
-                    <div class="mt-1"><span class="activity-indicator"></span></div>
-                    <div>
-                        <div class="fw-semibold text-dark">Presensi Subuh selesai</div>
-                        <div class="small text-muted">450 santri hadir tepat waktu</div>
-                        <div class="small text-black-50">5 jam yang lalu</div>
-                    </div>
+                @empty
+                <div class="text-center py-4 text-muted">
+                    <i class="bi bi-info-circle fs-3 mb-2 d-block"></i>
+                    <p class="small mb-0">Belum ada aktivitas terbaru</p>
                 </div>
-
-                <div class="d-flex">
-                    <div class="mt-1"><span class="activity-indicator"></span></div>
-                    <div>
-                        <div class="fw-semibold text-dark">Laporan mingguan diunduh</div>
-                        <div class="small text-muted">Oleh Ust. Budi</div>
-                        <div class="small text-black-50">1 hari yang lalu</div>
-                    </div>
-                </div>
+                @endforelse
 
             </div>
         </div>

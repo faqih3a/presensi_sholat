@@ -130,11 +130,68 @@ class DashboardController extends Controller
             $distCounts['Alfa'] ?? 0,
         ];
 
+        // Fetch latest activities from database
+        $activities = collect();
+
+        // 1. Santri baru didaftarkan
+        $recentSantris = \App\Models\Santri::latest()->take(5)->get();
+        foreach ($recentSantris as $s) {
+            $activities->push([
+                'title' => 'Santri baru didaftarkan',
+                'subtitle' => $s->nama . ' dari Kelas ' . ($s->kelas ?? '-'),
+                'time' => $s->created_at,
+            ]);
+        }
+
+        // 2. Presensi sholat dicatat
+        $recentPresensis = \App\Models\Presensi::with('santri')
+            ->where('status', 'Hadir')
+            ->latest()
+            ->take(5)
+            ->get();
+        foreach ($recentPresensis as $p) {
+            if ($p->santri) {
+                $activities->push([
+                    'title' => 'Presensi ' . $p->waktu_sholat . ' dicatat',
+                    'subtitle' => $p->santri->nama . ' hadir tepat waktu',
+                    'time' => $p->created_at ?: \Carbon\Carbon::parse($p->tanggal . ' ' . $p->waktu_hadir),
+                ]);
+            }
+        }
+
+        // 3. Pengajuan izin
+        $recentIzins = \App\Models\Izin::with('user')
+            ->latest()
+            ->take(5)
+            ->get();
+        foreach ($recentIzins as $i) {
+            if ($i->user) {
+                $activities->push([
+                    'title' => 'Pengajuan Izin ' . $i->jenis_izin,
+                    'subtitle' => 'Oleh ' . $i->user->name . ' (' . $i->status . ')',
+                    'time' => $i->created_at,
+                ]);
+            }
+        }
+
+        // Sort by time descending and take 3
+        $latestActivities = $activities->sortByDesc('time')->take(3)->values()->all();
+
+        if (empty($latestActivities)) {
+            $latestActivities = [
+                [
+                    'title' => 'Sistem Presensi Berjalan',
+                    'subtitle' => 'Presensi sholat santri aktif',
+                    'time' => now(),
+                ]
+            ];
+        }
+
         return view('dashboard.index', compact(
             'totalSantri', 'hadirHariIni', 'tidakHadir', 'persentase', 
             'jadwal', 'chartLabels', 'chartData', 'waktuSholat', 
             'absentSantris', 'izinTodayRecords', 'alfaTodayRecords', 'fullDayIzinSantriIds',
-            'statusData', 'tanggal_mulai', 'tanggal_akhir'
+            'statusData', 'tanggal_mulai', 'tanggal_akhir', 'latestActivities'
         ));
     }
 
