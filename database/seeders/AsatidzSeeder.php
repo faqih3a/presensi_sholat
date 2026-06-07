@@ -12,11 +12,13 @@ class AsatidzSeeder extends Seeder
      */
     public function run(): void
     {
-        \App\Models\User::create([
-            'name' => 'Admin Asatidz',
-            'email' => 'admin@thursina.id',
-            'password' => \Illuminate\Support\Facades\Hash::make('admin'),
-            'role' => 'asatidz',
-        ]);
+        \App\Models\User::firstOrCreate(
+            ['email' => 'admin@thursina.id'],
+            [
+                'name' => 'Admin Asatidz',
+                'password' => \Illuminate\Support\Facades\Hash::make('admin'),
+                'role' => 'asatidz',
+            ]
+        );
     }
 }
