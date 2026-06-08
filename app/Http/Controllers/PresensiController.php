@@ -215,8 +215,6 @@ class PresensiController extends Controller
 
     private function isTimeInPrayerWindow($currentTime, $sholat, $jadwal)
     {
-        return true; // TEMPORARY BYPASS FOR TESTING
-        
         $fajr = $jadwal['Fajr'] ?? '04:00';
         $dhuhr = $jadwal['Dhuhr'] ?? '11:30';
         $asr = $jadwal['Asr'] ?? '14:30';
