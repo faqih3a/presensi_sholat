@@ -307,6 +307,11 @@
             margin-top: 10px !important;
             animation: dropdownFade 0.2s ease-out;
         }
+        .navbar-nav .dropdown-menu {
+            position: absolute !important;
+            right: 0;
+            left: auto;
+        }
         @keyframes dropdownFade {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
@@ -490,7 +495,7 @@
         <!-- Page content wrapper-->
         <div id="page-content-wrapper">
             <!-- Top navigation-->
-            <nav class="navbar navbar-light bg-white border-bottom py-3">
+            <nav class="navbar navbar-expand navbar-light bg-white border-bottom py-3">
                 <div class="container-fluid px-3 d-flex align-items-center">
                     <!-- Sidebar Toggle Button (Visible on all screens) -->
                     <button class="btn btn-light border-0 shadow-none" id="sidebarToggle" type="button">
