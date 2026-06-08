@@ -547,12 +547,9 @@
                                             <i class="bi bi-shield-lock text-info"></i> Keamanan Akun
                                         </a>
                                         <div class="dropdown-divider mx-2"></div>
-                                        <form action="{{ route('logout') }}" method="POST">
-                                            @csrf
-                                            <button type="submit" class="dropdown-item text-danger">
-                                                <i class="bi bi-box-arrow-right"></i> Keluar
-                                            </button>
-                                        </form>
+                                        <a class="dropdown-item text-danger" href="{{ route('logout') }}">
+                                            <i class="bi bi-box-arrow-right"></i> Keluar
+                                        </a>
                                     </div>
                                 </li>
                             @else
