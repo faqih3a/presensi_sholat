@@ -220,7 +220,7 @@
                 </form>
             </div>
             
-            <p class="text-muted text-center mt-4 mb-0" style="font-size: 0.8rem;">&copy; 2026 Thursina IIBS. All rights reserved.</p>
+            <p class="text-muted text-center mt-4 mb-0" style="font-size: 0.8rem;">&copy; 2026 Ponpes Thursina. All rights reserved.</p>
         </div>
         
         <!-- Right Panel: Visual -->
