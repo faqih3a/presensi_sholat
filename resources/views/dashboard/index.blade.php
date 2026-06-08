@@ -593,15 +593,6 @@
                                 @else
                                     <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 rounded-pill px-3">Alpha</span>
                                 @endif
-                                
-                                <div class="d-flex gap-1 ms-2">
-                                    <button type="button" class="btn btn-sm btn-white border px-2 py-1" onclick="editStatus('{{ $santri->id }}', '{{ $tanggal_akhir }}', '{{ $waktuSholat ?: 'Subuh' }}', '{{ $santri->current_status ?? 'Alfa' }}')">
-                                        <i class="bi bi-pencil-square text-primary"></i>
-                                    </button>
-                                    <button type="button" class="btn btn-sm btn-white border px-2 py-1" onclick="deletePresensi('{{ $santri->id }}', '{{ $tanggal_akhir }}', '{{ $waktuSholat ?: 'Subuh' }}')">
-                                        <i class="bi bi-trash text-danger"></i>
-                                    </button>
-                                </div>
                             </div>
                         </li>
                     @empty
