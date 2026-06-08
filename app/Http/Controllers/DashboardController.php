@@ -295,109 +295,7 @@ class DashboardController extends Controller
 
     private function syncAlfas()
     {
-        $now = \Carbon\Carbon::now('Asia/Jakarta');
-        $today = $now->format('Y-m-d');
-        $yesterday = $now->copy()->subDay()->format('Y-m-d');
-        
-        // Ambil jadwal sholat hari ini
-        $jadwal = $this->getJadwalSholat($now);
-        if (!$jadwal) return;
-
-        // Mapping nama sholat di API ke nama sholat di sistem
-        $mapping = [
-            'Fajr' => 'Subuh',
-            'Dhuhr' => 'Dzuhur',
-            'Asr' => 'Ashar',
-            'Maghrib' => 'Maghrib',
-            'Isha' => 'Isya'
-        ];
-
-        // Tentukan batas waktu sholat
-        $times = $this->getPrayerEndTimes($today, $jadwal);
-
-        $santris = \App\Models\Santri::all();
-
-        // Fetch all approved permits for today and yesterday to avoid N+1 queries
-        $activeIzins = \App\Models\Izin::where('status', 'Disetujui')
-            ->where(function($q) use ($today, $yesterday) {
-                $q->whereDate('tanggal_mulai', '<=', $today)
-                  ->whereDate('tanggal_selesai', '>=', $yesterday);
-            })
-            ->get();
-        $activeIzinsGrouped = $activeIzins->groupBy('user_id');
-
-        foreach ($times as $sholat => $endTime) {
-            if ($now->greaterThan($endTime)) {
-                $cacheKey = 'sync_alfa_' . $today . '_' . $sholat;
-                if (\Illuminate\Support\Facades\Cache::has($cacheKey)) {
-                    continue;
-                }
-
-                // Cari santri yang TIDAK punya record presensi untuk sholat ini hari ini
-                $presentSantriIds = Presensi::withTrashed()
-                                            ->where('tanggal', $today)
-                                            ->where('waktu_sholat', $sholat)
-                                            ->pluck('santri_id')
-                                            ->toArray();
-
-                foreach ($santris as $santri) {
-                    if (!in_array($santri->id, $presentSantriIds)) {
-                        // Cek apakah santri punya izin yang disetujui hari ini
-                        $userIzins = $activeIzinsGrouped->get($santri->user_id) ?? collect();
-                        $hasIzin = $userIzins->contains(function ($izin) use ($today) {
-                            return $today >= $izin->tanggal_mulai && $today <= $izin->tanggal_selesai;
-                        });
-                        
-                        $status = $hasIzin ? 'Izin' : 'Alfa';
-
-                        Presensi::firstOrCreate([
-                            'santri_id' => $santri->id,
-                            'tanggal' => $today,
-                            'waktu_sholat' => $sholat,
-                        ], [
-                            'status' => $status,
-                            'waktu_hadir' => null
-                        ]);
-                    }
-                }
-
-                // Cache today's prayer sync to avoid heavy db loops
-                \Illuminate\Support\Facades\Cache::put($cacheKey, true, 86400);
-            }
-        }
-        
-        // Opsional: Cek juga hari kemarin jika ada yang tertinggal
-        $hasYesterdaySync = \Illuminate\Support\Facades\Cache::get('sync_alfa_' . $yesterday);
-        if (!$hasYesterdaySync) {
-            foreach ($mapping as $apiName => $sysName) {
-                $presentSantriIds = Presensi::withTrashed()
-                                            ->where('tanggal', $yesterday)
-                                            ->where('waktu_sholat', $sysName)
-                                            ->pluck('santri_id')
-                                            ->toArray();
-
-                foreach ($santris as $santri) {
-                    if (!in_array($santri->id, $presentSantriIds)) {
-                        $userIzins = $activeIzinsGrouped->get($santri->user_id) ?? collect();
-                        $hasIzin = $userIzins->contains(function ($izin) use ($yesterday) {
-                            return $yesterday >= $izin->tanggal_mulai && $yesterday <= $izin->tanggal_selesai;
-                        });
-                        
-                        $status = $hasIzin ? 'Izin' : 'Alfa';
-
-                        Presensi::firstOrCreate([
-                            'santri_id' => $santri->id,
-                            'tanggal' => $yesterday,
-                            'waktu_sholat' => $sysName,
-                        ], [
-                            'status' => $status,
-                            'waktu_hadir' => null
-                        ]);
-                    }
-                }
-            }
-            \Illuminate\Support\Facades\Cache::put('sync_alfa_' . $yesterday, true, 86400);
-        }
+        \Illuminate\Support\Facades\Artisan::call('app:sync-alfas');
     }
 
     private function getJadwalSholat(\Carbon\Carbon $date)
@@ -428,15 +326,5 @@ class DashboardController extends Controller
             return null;
         });
     }
-
-    private function getPrayerEndTimes($date, $jadwal)
-    {
-        return [
-            'Subuh' => \Carbon\Carbon::parse($date . ' ' . $jadwal['Fajr'], 'Asia/Jakarta')->addMinutes(10),
-            'Dzuhur' => \Carbon\Carbon::parse($date . ' ' . $jadwal['Dhuhr'], 'Asia/Jakarta')->addMinutes(10),
-            'Ashar' => \Carbon\Carbon::parse($date . ' ' . $jadwal['Asr'], 'Asia/Jakarta')->addMinutes(10),
-            'Maghrib' => \Carbon\Carbon::parse($date . ' ' . $jadwal['Maghrib'], 'Asia/Jakarta')->addMinutes(10),
-            'Isya' => \Carbon\Carbon::parse($date . ' ' . $jadwal['Isha'], 'Asia/Jakarta')->addMinutes(10),
-        ];
-    }
+}
 }
