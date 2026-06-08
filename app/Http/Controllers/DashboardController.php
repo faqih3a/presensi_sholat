@@ -295,7 +295,11 @@ class DashboardController extends Controller
 
     private function syncAlfas()
     {
-        \Illuminate\Support\Facades\Artisan::call('app:sync-alfas');
+        $cacheKey = 'last_sync_alfas_run';
+        if (!\Illuminate\Support\Facades\Cache::has($cacheKey)) {
+            \Illuminate\Support\Facades\Cache::put($cacheKey, true, 600); // 10 minutes
+            \Illuminate\Support\Facades\Artisan::call('app:sync-alfas');
+        }
     }
 
     private function getJadwalSholat(\Carbon\Carbon $date)
