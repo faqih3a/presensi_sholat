@@ -117,20 +117,20 @@
     <div class="d-flex flex-wrap gap-2 align-items-center justify-content-md-end">
         <!-- Period Selection Tab -->
         <div class="btn-group bg-white p-1 rounded-pill border shadow-sm" role="group">
-            <button type="button" onclick="changePeriod('day')" class="btn btn-sm rounded-pill px-3 py-1.5 fw-bold {{ $currentPeriod == 'day' ? 'btn-success text-white' : 'btn-light text-success bg-transparent border-0' }}">Day</button>
-            <button type="button" onclick="changePeriod('week')" class="btn btn-sm rounded-pill px-3 py-1.5 fw-bold {{ $currentPeriod == 'week' ? 'btn-success text-white' : 'btn-light text-success bg-transparent border-0' }}">Week</button>
-            <button type="button" onclick="changePeriod('month')" class="btn btn-sm rounded-pill px-3 py-1.5 fw-bold {{ $currentPeriod == 'month' ? 'btn-success text-white' : 'btn-light text-success bg-transparent border-0' }}">Month</button>
+            <button type="button" onclick="changePeriod('day')" class="btn rounded-pill px-4 py-2 fw-bold {{ $currentPeriod == 'day' ? 'btn-success text-white' : 'btn-light text-success bg-transparent border-0' }}" style="font-size: 0.9rem; min-width: 85px;">Day</button>
+            <button type="button" onclick="changePeriod('week')" class="btn rounded-pill px-4 py-2 fw-bold {{ $currentPeriod == 'week' ? 'btn-success text-white' : 'btn-light text-success bg-transparent border-0' }}" style="font-size: 0.9rem; min-width: 85px;">Week</button>
+            <button type="button" onclick="changePeriod('month')" class="btn rounded-pill px-4 py-2 fw-bold {{ $currentPeriod == 'month' ? 'btn-success text-white' : 'btn-light text-success bg-transparent border-0' }}" style="font-size: 0.9rem; min-width: 85px;">Month</button>
         </div>
 
         <div class="d-flex align-items-center gap-2">
             <!-- Arrow Left -->
-            <button type="button" onclick="navigate(-1)" class="btn btn-white border rounded-3 px-3 py-1.5 shadow-sm text-secondary">
+            <button type="button" onclick="navigate(-1)" class="btn btn-white border rounded-3 px-3.5 py-2 shadow-sm text-secondary" style="display: flex; align-items: center; justify-content: center; height: 38px;">
                 <i class="bi bi-chevron-left"></i>
             </button>
 
             <!-- Month Dropdown Toggle (Always Month/Year dropdown) -->
             <div class="dropdown d-inline-block">
-                <button class="btn btn-white border rounded-3 px-4 py-1.5 shadow-sm fw-bold text-success dropdown-toggle no-caret" type="button" id="date-label-btn" data-bs-toggle="dropdown" aria-expanded="false" style="font-size: 0.9rem; min-width: 140px;">
+                <button class="btn btn-white border rounded-3 px-4 py-2 shadow-sm fw-bold text-success dropdown-toggle no-caret" type="button" id="date-label-btn" data-bs-toggle="dropdown" aria-expanded="false" style="font-size: 0.9rem; min-width: 170px; height: 38px;">
                     {{ $dateLabel }}
                 </button>
                 <div class="dropdown-menu dropdown-menu-end p-3 border-0 shadow-lg rounded-4 mt-2" aria-labelledby="date-label-btn" style="min-width: 280px; z-index: 1050;">
@@ -161,7 +161,7 @@
             </div>
 
             <!-- Arrow Right -->
-            <button type="button" onclick="navigate(1)" class="btn btn-white border rounded-3 px-3 py-1.5 shadow-sm text-secondary">
+            <button type="button" onclick="navigate(1)" class="btn btn-white border rounded-3 px-3.5 py-2 shadow-sm text-secondary" style="display: flex; align-items: center; justify-content: center; height: 38px;">
                 <i class="bi bi-chevron-right"></i>
             </button>
         </div>
