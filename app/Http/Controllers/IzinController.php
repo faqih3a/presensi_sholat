@@ -112,31 +112,9 @@ class IzinController extends Controller
                 : [$izin->waktu_sholat];
 
             if ($request->status === 'Disetujui') {
-                $address = 'Bogor, Kecamatan Cibeureum, Kp Joglo, Indonesia';
                 $now = \Carbon\Carbon::now('Asia/Jakarta');
                 $todayStr = $now->format('Y-m-d');
-                $cacheKey = 'jadwal_sholat_' . md5($address) . '_' . $todayStr;
-                $jadwal = \Illuminate\Support\Facades\Cache::get($cacheKey);
-
-                if (!$jadwal) {
-                    try {
-                        $response = \Illuminate\Support\Facades\Http::timeout(5)->get('https://api.aladhan.com/v1/timingsByAddress', [
-                            'address' => $address,
-                            'method' => 20,
-                            'date' => $now->format('d-m-Y')
-                        ]);
-                        if ($response->successful()) {
-                            $timings = $response->json('data.timings');
-                            foreach ($timings as $key => $time) {
-                                $timings[$key] = substr($time, 0, 5);
-                            }
-                            $jadwal = $timings;
-                            \Illuminate\Support\Facades\Cache::put($cacheKey, $jadwal, 86400);
-                        }
-                    } catch (\Exception $e) {
-                        // Ignore
-                    }
-                }
+                $jadwal = \App\Services\JadwalSholatService::getJadwal($now);
 
                 $fajr = $jadwal['Fajr'] ?? '04:00';
                 $dhuhr = $jadwal['Dhuhr'] ?? '11:30';

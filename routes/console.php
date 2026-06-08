@@ -20,32 +20,7 @@ Artisan::command('app:sync-alfas', function () {
     $yesterday = $now->copy()->subDay()->format('Y-m-d');
     
     // Get prayer schedule
-    $address = 'Bogor, Kecamatan Cibeureum, Kp Joglo, Indonesia';
-    $cacheKey = 'jadwal_sholat_' . md5($address) . '_' . $now->format('Y-m-d');
-    $jadwal = Cache::remember($cacheKey, 86400, function () use ($now, $address) {
-        try {
-            $response = Http::timeout(5)->get('https://api.aladhan.com/v1/timingsByAddress', [
-                'address' => $address,
-                'method' => 20, // Kemenag RI
-                'date' => $now->format('d-m-Y')
-            ]);
-            if ($response->successful()) {
-                $timings = $response->json('data.timings');
-                foreach ($timings as $key => $time) {
-                    $timings[$key] = substr($time, 0, 5);
-                }
-                return $timings;
-            }
-        } catch (\Exception $e) {
-            // Log or ignore
-        }
-        return null;
-    });
-
-    if (!$jadwal) {
-        $this->error('Failed to retrieve prayer times.');
-        return;
-    }
+    $jadwal = \App\Services\JadwalSholatService::getJadwal($now);
 
     $mapping = [
         'Fajr' => 'Subuh',
