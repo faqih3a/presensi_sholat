@@ -24,12 +24,18 @@
         box-shadow: 0 1rem 3rem rgba(0,0,0,0.2);
         border: 4px solid rgba(255, 255, 255, 0.1);
         transition: all 0.3s ease;
+        /* Fix hardware acceleration clipping bug on mobile */
+        -webkit-transform: translate3d(0, 0, 0);
+        transform: translate3d(0, 0, 0);
+        -webkit-backface-visibility: hidden;
+        backface-visibility: hidden;
     }
 
     #video {
         width: 100%;
         height: 100%;
         object-fit: cover;
+        border-radius: 1.25rem;
     }
 
     canvas {
@@ -38,6 +44,7 @@
         left: 0;
         width: 100%;
         height: 100%;
+        border-radius: 1.25rem;
     }
 
     .scan-line {
@@ -273,7 +280,8 @@
     let selectedWaktuSholat = null;
     let isModelsLoaded = false;
     let scanInterval = null;
-
+    let shouldStartVideo = false; // Flag to play video when models finish loading
+ 
     const sholatSelector = document.getElementById('sholat-selector');
     const cameraArea = document.getElementById('camera-area');
     const btnMulai = document.getElementById('btn-mulai-presensi');
@@ -341,7 +349,8 @@
         selectedBadge.textContent = `Sholat: ${selectedWaktuSholat}`;
         
         if (!isModelsLoaded) {
-            loadDataAndModels();
+            shouldStartVideo = true;
+            // statusTitle dan statusDesc sudah otomatis diupdate oleh loadDataAndModels() yang berjalan di background
         } else {
             startVideo();
         }
@@ -366,7 +375,8 @@
         cameraArea.classList.add('d-none');
         sholatSelector.classList.remove('d-none');
         
-        // Reset status
+        // Reset status dan flag
+        shouldStartVideo = false;
         statusTitle.className = 'text-success fw-bold mb-2';
         statusTitle.innerHTML = '<i class="bi bi-check-circle-fill me-2"></i>Sistem Aktif';
         statusDesc.textContent = 'Silakan pilih waktu sholat dan mulai presensi.';
@@ -414,7 +424,9 @@
             statusDesc.textContent = `${santris.length} wajah santri berhasil dimuat. Silakan menghadap kamera.`;
             isModelsLoaded = true;
             
-            startVideo();
+            if (shouldStartVideo) {
+                startVideo();
+            }
 
         } catch (error) {
             console.error(error);
@@ -558,7 +570,7 @@
         }, 400); // Scan tiap 400ms
     });
 
-    // Jangan mulai secara otomatis saat load
-    // loadDataAndModels();
+    // Mulai memuat models dan data di background saat halaman dibuka
+    loadDataAndModels();
 </script>
 @endpush
