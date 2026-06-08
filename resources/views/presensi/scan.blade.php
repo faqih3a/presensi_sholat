@@ -433,30 +433,46 @@
         }
 
         const constraints = { 
-            video: true 
+            video: {
+                facingMode: 'user'
+            }
         };
 
         navigator.mediaDevices.getUserMedia(constraints)
             .then(stream => { 
                 video.srcObject = stream; 
+                video.setAttribute('playsinline', true);
+                video.play().catch(e => console.error("Error playing video:", e));
                 statusTitle.className = 'text-success fw-bold mb-2';
                 statusTitle.innerHTML = '<i class="bi bi-check-circle-fill me-2"></i>Kamera Aktif';
                 statusDesc.textContent = 'Arahkan wajah Anda ke kamera untuk presensi.';
             })
             .catch(err => {
-                console.error("Camera Error:", err);
-                statusTitle.className = 'text-danger fw-bold mb-2';
-                statusTitle.innerHTML = '<i class="bi bi-camera-video-off-fill me-2"></i>Kamera Gagal';
-                
-                if (err.name === 'NotAllowedError') {
-                    statusDesc.textContent = 'Izin kamera ditolak. Silakan aktifkan izin kamera di pengaturan browser Anda.';
-                } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
-                    statusDesc.textContent = 'Kamera tidak ditemukan. Pastikan kamera terpasang dengan benar.';
-                } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
-                    statusDesc.textContent = 'Kamera sedang digunakan oleh aplikasi lain.';
-                } else {
-                    statusDesc.textContent = 'Gagal mengakses kamera. Silakan periksa pengaturan browser atau perangkat Anda.';
-                }
+                console.warn("Kamera depan gagal, mencoba kamera default...", err);
+                navigator.mediaDevices.getUserMedia({ video: true })
+                    .then(stream => {
+                        video.srcObject = stream;
+                        video.setAttribute('playsinline', true);
+                        video.play().catch(e => console.error("Error playing video:", e));
+                        statusTitle.className = 'text-success fw-bold mb-2';
+                        statusTitle.innerHTML = '<i class="bi bi-check-circle-fill me-2"></i>Kamera Aktif';
+                        statusDesc.textContent = 'Arahkan wajah Anda ke kamera untuk presensi.';
+                    })
+                    .catch(fallbackErr => {
+                        console.error("Camera Error:", fallbackErr);
+                        statusTitle.className = 'text-danger fw-bold mb-2';
+                        statusTitle.innerHTML = '<i class="bi bi-camera-video-off-fill me-2"></i>Kamera Gagal';
+                        
+                        if (fallbackErr.name === 'NotAllowedError') {
+                            statusDesc.textContent = 'Izin kamera ditolak. Silakan aktifkan izin kamera di pengaturan browser Anda.';
+                        } else if (fallbackErr.name === 'NotFoundError' || fallbackErr.name === 'DevicesNotFoundError') {
+                            statusDesc.textContent = 'Kamera tidak ditemukan. Pastikan kamera terpasang dengan benar.';
+                        } else if (fallbackErr.name === 'NotReadableError' || fallbackErr.name === 'TrackStartError') {
+                            statusDesc.textContent = 'Kamera sedang digunakan oleh aplikasi lain.';
+                        } else {
+                            statusDesc.textContent = 'Gagal mengakses kamera. Silakan periksa pengaturan browser atau perangkat Anda.';
+                        }
+                    });
             });
     }
 
