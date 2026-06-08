@@ -196,18 +196,23 @@ class SantriDashboardController extends Controller
 
     private function getJadwalSholat(\Carbon\Carbon $date)
     {
-        $cacheKey = 'jadwal_sholat_' . $date->format('Y-m-d');
+        $address = 'Bogor, Kecamatan Cibeureum, Kp Joglo, Indonesia';
+        $cacheKey = 'jadwal_sholat_' . md5($address) . '_' . $date->format('Y-m-d');
 
-        return \Illuminate\Support\Facades\Cache::remember($cacheKey, 86400, function () use ($date) {
+        return \Illuminate\Support\Facades\Cache::remember($cacheKey, 86400, function () use ($date, $address) {
             try {
                 $response = \Illuminate\Support\Facades\Http::timeout(5)->get('https://api.aladhan.com/v1/timingsByAddress', [
-                    'address' => 'Malang, Indonesia',
+                    'address' => $address,
                     'method' => 20, // Kemenag RI
                     'date' => $date->format('d-m-Y')
                 ]);
 
                 if ($response->successful()) {
-                    return $response->json('data.timings');
+                    $timings = $response->json('data.timings');
+                    foreach ($timings as $key => $time) {
+                        $timings[$key] = substr($time, 0, 5);
+                    }
+                    return $timings;
                 }
             } catch (\Exception $e) {
             }
