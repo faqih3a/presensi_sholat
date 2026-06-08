@@ -101,6 +101,65 @@ class IzinController extends Controller
             'keterangan_admin' => $request->keterangan_admin,
         ]);
 
+        // Sinkronisasi status presensi santri jika izin disetujui atau ditolak
+        $santri = \App\Models\Santri::where('user_id', $izin->user_id)->first();
+        if ($santri) {
+            $start = \Carbon\Carbon::parse($izin->tanggal_mulai);
+            $end = \Carbon\Carbon::parse($izin->tanggal_selesai);
+            
+            $prayers = $izin->waktu_sholat === 'Full Day' 
+                ? ['Subuh', 'Dzuhur', 'Ashar', 'Maghrib', 'Isya'] 
+                : [$izin->waktu_sholat];
+
+            if ($request->status === 'Disetujui') {
+                for ($date = $start->copy(); $date->lte($end); $date->addDay()) {
+                    $dateStr = $date->format('Y-m-d');
+                    foreach ($prayers as $prayer) {
+                        $existing = \App\Models\Presensi::where([
+                            'santri_id' => $santri->id,
+                            'tanggal' => $dateStr,
+                            'waktu_sholat' => $prayer,
+                        ])->first();
+
+                        if ($existing) {
+                            if ($existing->status !== 'Hadir') {
+                                $existing->update([
+                                    'status' => 'Izin',
+                                    'waktu_hadir' => null
+                                ]);
+                            }
+                        } else {
+                            \App\Models\Presensi::create([
+                                'santri_id' => $santri->id,
+                                'tanggal' => $dateStr,
+                                'waktu_sholat' => $prayer,
+                                'status' => 'Izin',
+                                'waktu_hadir' => null
+                            ]);
+                        }
+                    }
+                }
+            } elseif ($request->status === 'Ditolak') {
+                for ($date = $start->copy(); $date->lte($end); $date->addDay()) {
+                    $dateStr = $date->format('Y-m-d');
+                    foreach ($prayers as $prayer) {
+                        $existing = \App\Models\Presensi::where([
+                            'santri_id' => $santri->id,
+                            'tanggal' => $dateStr,
+                            'waktu_sholat' => $prayer,
+                        ])->first();
+
+                        if ($existing && $existing->status === 'Izin') {
+                            $existing->update([
+                                'status' => 'Alfa',
+                                'waktu_hadir' => null
+                            ]);
+                        }
+                    }
+                }
+            }
+        }
+
         return redirect()->back()->with('success', 'Status permohonan izin berhasil diperbarui.');
     }
 }
