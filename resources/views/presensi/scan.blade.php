@@ -326,7 +326,7 @@
             const [endH, endM] = windowTimes.end.split(':').map(Number);
             const endMin = endH * 60 + endM;
             
-            if (currentMin < startMin || currentMin > endMin) {
+            if (false && (currentMin < startMin || currentMin > endMin)) {
                 showNotification(
                     'Presensi Belum Dibuka / Sudah Ditutup',
                     `Presensi sholat ${selectedWaktuSholat} hanya diperbolehkan dari pukul ${windowTimes.start} sampai ${windowTimes.end}.`,
