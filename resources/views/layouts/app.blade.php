@@ -417,14 +417,11 @@
 
         <!-- Sidebar-->
         <div id="sidebar-wrapper">
-            <div class="sidebar-heading border-bottom d-flex align-items-center justify-content-between">
+            <div class="sidebar-heading border-bottom d-flex align-items-center">
                 <div class="d-flex align-items-center gap-2">
                     <i class="bi bi-shield-check text-success fs-4"></i>
                     <span class="sidebar-text">Presensi</span>
                 </div>
-                <button class="btn btn-link text-muted p-0 d-none d-md-block" id="miniSidebarToggle">
-                    <i class="bi bi-chevron-left" id="miniSidebarIcon"></i>
-                </button>
             </div>
             <div class="list-group list-group-flush flex-grow-1">
                 @auth
