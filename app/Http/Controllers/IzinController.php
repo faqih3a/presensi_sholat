@@ -112,9 +112,66 @@ class IzinController extends Controller
                 : [$izin->waktu_sholat];
 
             if ($request->status === 'Disetujui') {
+                $address = 'Bogor, Kecamatan Cibeureum, Kp Joglo, Indonesia';
+                $now = \Carbon\Carbon::now('Asia/Jakarta');
+                $todayStr = $now->format('Y-m-d');
+                $cacheKey = 'jadwal_sholat_' . md5($address) . '_' . $todayStr;
+                $jadwal = \Illuminate\Support\Facades\Cache::get($cacheKey);
+
+                if (!$jadwal) {
+                    try {
+                        $response = \Illuminate\Support\Facades\Http::timeout(5)->get('https://api.aladhan.com/v1/timingsByAddress', [
+                            'address' => $address,
+                            'method' => 20,
+                            'date' => $now->format('d-m-Y')
+                        ]);
+                        if ($response->successful()) {
+                            $timings = $response->json('data.timings');
+                            foreach ($timings as $key => $time) {
+                                $timings[$key] = substr($time, 0, 5);
+                            }
+                            $jadwal = $timings;
+                            \Illuminate\Support\Facades\Cache::put($cacheKey, $jadwal, 86400);
+                        }
+                    } catch (\Exception $e) {
+                        // Ignore
+                    }
+                }
+
+                $fajr = $jadwal['Fajr'] ?? '04:00';
+                $dhuhr = $jadwal['Dhuhr'] ?? '11:30';
+                $asr = $jadwal['Asr'] ?? '14:30';
+                $maghrib = $jadwal['Maghrib'] ?? '17:30';
+                $isha = $jadwal['Isha'] ?? '18:45';
+
+                $prayerEndOffsets = [
+                    'Subuh' => $fajr,
+                    'Dzuhur' => $dhuhr,
+                    'Ashar' => $asr,
+                    'Maghrib' => $maghrib,
+                    'Isya' => $isha
+                ];
+
                 for ($date = $start->copy(); $date->lte($end); $date->addDay()) {
                     $dateStr = $date->format('Y-m-d');
+                    $isPastDate = $dateStr < $todayStr;
+                    $isToday = $dateStr === $todayStr;
+
+                    if (!$isPastDate && !$isToday) {
+                        // Future date: skip immediate recording
+                        continue;
+                    }
+
                     foreach ($prayers as $prayer) {
+                        if ($isToday) {
+                            $prayerTimeStr = $prayerEndOffsets[$prayer] ?? '12:00';
+                            $endTime = \Carbon\Carbon::parse($todayStr . ' ' . $prayerTimeStr, 'Asia/Jakarta')->addMinutes(10);
+                            if ($now->lessThanOrEqualTo($endTime)) {
+                                // Has not passed yet: skip immediate recording
+                                continue;
+                            }
+                        }
+
                         $existing = \App\Models\Presensi::where([
                             'santri_id' => $santri->id,
                             'tanggal' => $dateStr,

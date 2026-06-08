@@ -88,8 +88,12 @@ Artisan::command('app:sync-alfas', function () {
             foreach ($santris as $santri) {
                 if (!in_array($santri->id, $presentSantriIds)) {
                     $userIzins = $activeIzinsGrouped->get($santri->user_id) ?? collect();
-                    $hasIzin = $userIzins->contains(function ($izin) use ($today) {
-                        return $today >= $izin->tanggal_mulai && $today <= $izin->tanggal_selesai;
+                    $hasIzin = $userIzins->contains(function ($izin) use ($today, $sholat) {
+                        $startStr = $izin->tanggal_mulai->format('Y-m-d');
+                        $endStr = $izin->tanggal_selesai->format('Y-m-d');
+                        return $today >= $startStr 
+                            && $today <= $endStr
+                            && ($izin->waktu_sholat === 'Full Day' || $izin->waktu_sholat === $sholat);
                     });
                     
                     $status = $hasIzin ? 'Izin' : 'Alfa';
@@ -122,8 +126,12 @@ Artisan::command('app:sync-alfas', function () {
             foreach ($santris as $santri) {
                 if (!in_array($santri->id, $presentSantriIds)) {
                     $userIzins = $activeIzinsGrouped->get($santri->user_id) ?? collect();
-                    $hasIzin = $userIzins->contains(function ($izin) use ($yesterday) {
-                        return $yesterday >= $izin->tanggal_mulai && $yesterday <= $izin->tanggal_selesai;
+                    $hasIzin = $userIzins->contains(function ($izin) use ($yesterday, $sysName) {
+                        $startStr = $izin->tanggal_mulai->format('Y-m-d');
+                        $endStr = $izin->tanggal_selesai->format('Y-m-d');
+                        return $yesterday >= $startStr 
+                            && $yesterday <= $endStr
+                            && ($izin->waktu_sholat === 'Full Day' || $izin->waktu_sholat === $sysName);
                     });
                     
                     $status = $hasIzin ? 'Izin' : 'Alfa';
