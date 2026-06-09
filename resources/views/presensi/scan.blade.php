@@ -538,7 +538,17 @@
         }
     }
 
-    video.addEventListener('play', () => {
+    video.addEventListener('playing', () => {
+        // Pastikan video metadata/frame sudah ter-load sepenuhnya
+        if (video.videoWidth === 0 || video.videoHeight === 0 || video.readyState < 2) {
+            setTimeout(() => {
+                if (video.srcObject && !video.paused) {
+                    video.dispatchEvent(new Event('playing'));
+                }
+            }, 100);
+            return;
+        }
+
         // Hapus canvas lama jika ada untuk mencegah penumpukan
         const oldCanvas = container.querySelector('canvas');
         if (oldCanvas) oldCanvas.remove();
