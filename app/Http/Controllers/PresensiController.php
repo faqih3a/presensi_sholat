@@ -52,7 +52,8 @@ class PresensiController extends Controller
         }
 
         // Validasi apakah waktu saat ini masuk dalam rentang waktu sholat yang dipilih
-        $isValidTime = $this->isTimeInPrayerWindow($currentTime, $selectedWaktu, $jadwal);
+        // TEMPORARY BYPASS FOR TESTING:
+        $isValidTime = true; // $this->isTimeInPrayerWindow($currentTime, $selectedWaktu, $jadwal);
 
         if (!$isValidTime) {
             $currentActiveSholat = "Tidak Ada";

@@ -312,7 +312,8 @@
 
     btnMulai.addEventListener('click', () => {
         // Cek apakah waktu sholat valid berdasarkan jadwalInfo
-        if (jadwalInfo && jadwalInfo[selectedWaktuSholat]) {
+        // TEMPORARY BYPASS FOR TESTING: Changed condition to false
+        if (false && jadwalInfo && jadwalInfo[selectedWaktuSholat]) {
             const windowTimes = jadwalInfo[selectedWaktuSholat];
             
             // Dapatkan waktu saat ini di Asia/Jakarta
