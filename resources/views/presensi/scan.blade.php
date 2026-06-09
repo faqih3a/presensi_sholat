@@ -399,6 +399,7 @@
             statusDesc.textContent = 'Memuat Data Santri...';
             const response = await fetch('/api/santris');
             const santris = await response.json();
+            console.log("Loaded Santris from API:", santris);
 
             if(santris.length === 0) {
                 statusTitle.className = 'text-danger fw-bold mb-2';
@@ -417,8 +418,10 @@
                     [float32Array]
                 );
             });
+            console.log("Labeled Face Descriptors created:", labeledFaceDescriptors);
 
-            faceMatcher = new faceapi.FaceMatcher(labeledFaceDescriptors, 0.45); // Threshold 0.45 for stricter matching
+            // Change matching threshold to 0.55 for better tolerance
+            faceMatcher = new faceapi.FaceMatcher(labeledFaceDescriptors, 0.55); 
 
             statusTitle.className = 'text-success fw-bold mb-2';
             statusTitle.innerHTML = '<i class="bi bi-check-circle-fill me-2"></i>Sistem Aktif';
@@ -430,7 +433,7 @@
             }
 
         } catch (error) {
-            console.error(error);
+            console.error("Error in loadDataAndModels:", error);
             statusTitle.className = 'text-danger fw-bold mb-2';
             statusTitle.innerHTML = '<i class="bi bi-x-circle-fill me-2"></i>Terjadi Kesalahan';
             statusDesc.textContent = 'Gagal memuat sistem. Cek koneksi atau reload halaman.';
@@ -458,7 +461,7 @@
                 video.play().catch(e => console.error("Error playing video:", e));
                 statusTitle.className = 'text-success fw-bold mb-2';
                 statusTitle.innerHTML = '<i class="bi bi-check-circle-fill me-2"></i>Kamera Aktif';
-                statusDesc.textContent = 'Arahkan wajah Anda ke kamera untuk presensi.';
+                statusDesc.textContent = `Arahkan wajah Anda ke kamera untuk presensi. (${labeledFaceDescriptors.length} wajah dimuat)`;
             })
             .catch(err => {
                 console.warn("Kamera depan gagal, mencoba kamera default...", err);
@@ -566,9 +569,12 @@
                 const resizedDetection = faceapi.resizeResults(detection, displaySize);
                 const result = faceMatcher.findBestMatch(resizedDetection.descriptor);
                 
+                console.log("Face detected. Score:", detection.detection.score, "Matching result:", result.toString());
+                
                 const box = resizedDetection.detection.box;
+                const matchPercentage = Math.round((1 - result.distance) * 100);
                 const drawBox = new faceapi.draw.DrawBox(box, { 
-                    label: result.label === 'unknown' ? 'Tidak Dikenal' : 'Mencocokkan...',
+                    label: result.label === 'unknown' ? `Tidak Dikenal (${matchPercentage}%)` : `Mencocokkan (${matchPercentage}%)`,
                     boxColor: result.label === 'unknown' ? '#ef4444' : '#198754'
                 });
                 drawBox.draw(canvas);
