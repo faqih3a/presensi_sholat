@@ -542,17 +542,27 @@
 
         const canvas = faceapi.createCanvasFromMedia(video);
         container.appendChild(canvas);
-        const displaySize = { width: video.clientWidth, height: video.clientHeight };
-        faceapi.matchDimensions(canvas, displaySize);
+        let displaySize = { width: video.clientWidth, height: video.clientHeight };
+        if (displaySize.width > 0 && displaySize.height > 0) {
+            faceapi.matchDimensions(canvas, displaySize);
+        }
 
         scanInterval = setInterval(async () => {
             if(!faceMatcher) return;
 
-            const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 })).withFaceLandmarks().withFaceDescriptor();
+            // Re-initialize displaySize if it was 0 when event fired
+            if (displaySize.width === 0 || displaySize.height === 0) {
+                displaySize = { width: video.clientWidth, height: video.clientHeight };
+                if (displaySize.width > 0 && displaySize.height > 0) {
+                    faceapi.matchDimensions(canvas, displaySize);
+                }
+            }
+
+            const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.3 })).withFaceLandmarks().withFaceDescriptor();
             
             canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
             
-            if (detection) {
+            if (detection && displaySize.width > 0 && displaySize.height > 0) {
                 const resizedDetection = faceapi.resizeResults(detection, displaySize);
                 const result = faceMatcher.findBestMatch(resizedDetection.descriptor);
                 
